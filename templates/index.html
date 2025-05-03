@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Главная — Sound Party{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Добро пожаловать в Sound Party!</h1>
+  <p class="lead">Присоединяйтесь к музыкальным мероприятиям и участвуйте в соревнованиях</p>
+
+  <div class="row g-4 mt-3">
+    {% for event in events %}
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">{{ event.description }}</h5>
+          <p class="card-text">
+            <i class="fas fa-calendar-alt"></i> {{ event.date }}<br>
+            <i class="fas fa-clock"></i> {{ event.time }}<br>
+            <i class="fas fa-users"></i> {{ event.max_teams }} команд<br>
+            <i class="fas fa-map-marker-alt"></i> {{ event.venue_name }}
+          </p>
+        </div>
+        <div class="card-footer">
+          <a href="#" class="btn btn-primary w-100">
+            <i class="fas fa-paper-plane"></i> Подать заявку
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% endblock %}
