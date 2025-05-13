@@ -24,6 +24,7 @@ def get_all_events(conn):
         v.capacity
     FROM "Events" e
     JOIN "Venues" v ON e.venue_id = v.venue_id
+    ORDER BY e.date DESC
     """
     return execute_query(conn, query)
 

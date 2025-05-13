@@ -1,46 +1,31 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from fastapi.openapi.utils import get_openapi
-from app.core.lifespan import lifespan
-from app.routers import (
-    auth_router,
-    event_router,
-    user_router,
-    team_router,
-    booking_router,
-    payment_router,
-    event_result_router,
-    venue_router,
-    participant_router,
-)
 
+# Локальные импорты
+from app.core.lifespan import lifespan
+from app.routers.api import auth as api_auth
+from app.routers.web import auth as web_auth
+from app.routers.web import home as web_home
 
 app = FastAPI(
-    title="Sound Party API",
-    description="API для платформы Sound Party",
+    title="Sound Party",
+    description="API и веб-интерфейс для Sound Party",
     version="1.0.0",
-    openapi_url="/api/openapi.json",
-    lifespan=lifespan,
+    lifespan=lifespan
 )
 
-# Подключение статики
+# Статика и шаблоны
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Подключение шаблонов
-templates = Jinja2Templates(directory="templates")
+# --- Подключение маршрутов ---
+# API маршруты
+app.include_router(api_auth.router, prefix="/api")
 
-# Подключение маршрутов
-app.include_router(auth_router.router)
-app.include_router(event_router.router)
-app.include_router(user_router.router)
-app.include_router(team_router.router)
-app.include_router(booking_router.router)
-app.include_router(payment_router.router)
-app.include_router(event_result_router.router)
-app.include_router(venue_router.router)
-app.include_router(participant_router.router)
+# Веб-маршруты
+app.include_router(web_home.router)
+app.include_router(web_auth.router)
 
 # --- Настройка OpenAPI ---
 def custom_openapi():
@@ -67,20 +52,3 @@ def custom_openapi():
     return app.openapi_schema
 
 app.openapi = custom_openapi
-
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    # Пример данных
-    events = [
-        {"description": "Музыкальный баттл", "date": "2025-04-10", "time": "19:00", "max_teams": 10, "venue_name": "Клуб Эхо"},
-        {"description": "DJ Battle", "date": "2025-04-15", "time": "20:00", "max_teams": 8, "venue_name": "Сцена 2025"}
-    ]
-    return templates.TemplateResponse("index.html", {"request": request, "events": events})
-
-@app.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
-
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})

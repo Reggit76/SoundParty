@@ -26,6 +26,9 @@ def authenticate_user(conn, username, password):
     return user[0]
 
 def register_new_user(conn, user_data):
+    if user_data["password"] != user_data.get("confirm_password"):
+        raise ValueError("Пароли не совпадают")
+
     hashed_pw = hash_password(user_data["password"])
     user_data["password_hash"] = hashed_pw
-    return register_user(conn, user_data)
+    return create_user(conn, user_data)

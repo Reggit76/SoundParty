@@ -8,6 +8,13 @@
     {% for event in events %}
     <div class="col-md-4">
       <div class="card h-100">
+        <!-- Галочка для прошедших мероприятий -->
+        {% if event.is_past %}
+          <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+            <i class="fas fa-check"></i> Прошло
+          </span>
+        {% endif %}
+        
         <div class="card-body">
           <h5 class="card-title">{{ event.description }}</h5>
           <p class="card-text">
@@ -17,7 +24,7 @@
             <i class="fas fa-map-marker-alt"></i> {{ event.venue_name }}
           </p>
         </div>
-        <div class="card-footer">
+        <div class="card-footer text-center">
           <a href="#" class="btn btn-primary w-100">
             <i class="fas fa-paper-plane"></i> Подать заявку
           </a>

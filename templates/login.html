@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Вход — Sound Party{% endblock %}
 {% block content %}
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
   <div class="row justify-content-center">
     <div class="col-md-6">
       <div class="card">
@@ -16,6 +19,9 @@
             <div class="mb-3">
               <label for="password" class="form-label">Пароль</label>
               <input type="password" class="form-control" id="password" name="password" required>
+              <span class="position-absolute top-50 end-0 translate-middle-y pe-3" onclick="togglePassword()" style="cursor: pointer;">
+                <i class="far fa-eye" id="togglePasswordIcon"></i>
+              </span>
             </div>
             <button type="submit" class="btn btn-primary w-100">
               <i class="fas fa-sign-in-alt"></i> Войти
@@ -28,4 +34,20 @@
       </div>
     </div>
   </div>
+  <script>
+    // Функция показа/скрытия пароля
+    function togglePassword() {
+      const password = document.getElementById("password");
+      const icon = document.getElementById("togglePasswordIcon");
+      if (password.type === "password") {
+        password.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+      } else {
+        password.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+      }
+    }
+    </script>
 {% endblock %}

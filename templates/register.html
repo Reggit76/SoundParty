@@ -1,39 +1,116 @@
 {% extends "base.html" %}
 {% block title %}Регистрация — Sound Party{% endblock %}
 {% block content %}
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
   <div class="row justify-content-center">
     <div class="col-md-6">
-      <div class="card">
-        <div class="card-header">
-          <h4 class="card-title text-center">Регистрация</h4>
+      <div class="card shadow-sm">
+        <div class="card-header text-center">
+          <h4>Регистрация</h4>
         </div>
         <div class="card-body">
           <form action="/register" method="post">
+            <!-- Поля формы -->
             <div class="mb-3">
               <label for="username" class="form-label">Имя пользователя</label>
               <input type="text" class="form-control" id="username" name="username" required>
             </div>
+
             <div class="mb-3">
               <label for="fullname" class="form-label">Полное имя</label>
               <input type="text" class="form-control" id="fullname" name="fullname" required>
             </div>
+
             <div class="mb-3">
               <label for="email" class="form-label">Email</label>
               <input type="email" class="form-control" id="email" name="email" required>
             </div>
-            <div class="mb-3">
+
+            <!-- Исправленные поля паролей -->
+            <div class="mb-3 position-relative">
               <label for="password" class="form-label">Пароль</label>
-              <input type="password" class="form-control" id="password" name="password" required>
+              <div class="input-group">
+                <input type="password" 
+                     class="form-control pe-5" 
+                     id="password" 
+                     name="password" 
+                     required
+                     style="padding-right: 2.5rem">
+                <span class="position-absolute top-50 end-0 translate-middle-y me-3"
+                      onclick="togglePassword()" 
+                      style="cursor: pointer; z-index: 5">
+                  <i class="far fa-eye" id="togglePasswordIcon"></i>
+                </span>
+              </div>
             </div>
+
+            <div class="mb-3 position-relative">
+              <label for="confirm_password" class="form-label">Подтвердите пароль</label>
+              <div class="input-group">
+                <input type="password" 
+                     class="form-control pe-5" 
+                     id="confirm_password" 
+                     name="confirm_password" 
+                     required
+                     style="padding-right: 2.5rem">
+                <span class="position-absolute top-50 end-0 translate-middle-y me-3"
+                      onclick="toggleConfirmPassword()" 
+                      style="cursor: pointer; z-index: 5">
+                  <i class="far fa-eye" id="toggleConfirmPasswordIcon"></i>
+                </span>
+              </div>
+            </div>
+
+            <!-- Кнопки -->
             <button type="submit" class="btn btn-success w-100">
               <i class="fas fa-user-plus"></i> Зарегистрироваться
             </button>
           </form>
-        </div>
-        <div class="card-footer text-center">
-          <small>Уже есть аккаунт? <a href="/login">Войдите</a></small>
+          </div>
+          <div class="card-footer text-center">
+            <small>Уже есть аккаунт? <a href="/login">Войдите</a></small>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Скрипты остаются без изменений -->
+  <script>
+    function togglePassword() {
+      const password = document.getElementById("password");
+      const icon = document.getElementById("togglePasswordIcon");
+      if (password.type === "password") {
+        password.type = "text";
+        icon.classList.replace("fa-eye", "fa-eye-slash");
+      } else {
+        password.type = "password";
+        icon.classList.replace("fa-eye-slash", "fa-eye");
+      }
+    }
+
+    function toggleConfirmPassword() {
+      const password = document.getElementById("confirm_password");
+      const icon = document.getElementById("toggleConfirmPasswordIcon");
+      if (password.type === "password") {
+        password.type = "text";
+        icon.classList.replace("fa-eye", "fa-eye-slash");
+      } else {
+        password.type = "password";
+        icon.classList.replace("fa-eye-slash", "fa-eye");
+      }
+    }
+
+    document.querySelector("form").addEventListener("submit", function(e) {
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirm_password").value;
+
+      if (password !== confirmPassword) {
+        e.preventDefault();
+        alert("Пароли не совпадают!");
+      }
+    });
+  </script>
 {% endblock %}
