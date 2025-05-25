@@ -12,6 +12,7 @@
         </div>
         <div class="card-body">
           <form action="/register" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <!-- Поля формы -->
             <div class="mb-3">
               <label for="username" class="form-label">Имя пользователя</label>
@@ -40,7 +41,7 @@
                      style="padding-right: 2.5rem">
                 <span class="position-absolute top-50 end-0 translate-middle-y me-3"
                       onclick="togglePassword()" 
-                      style="cursor: pointer; z-index: 5">
+                      style="cursor: pointer; z-index: 5; margin-top: 20px;">
                   <i class="far fa-eye" id="togglePasswordIcon"></i>
                 </span>
               </div>
@@ -57,7 +58,7 @@
                      style="padding-right: 2.5rem">
                 <span class="position-absolute top-50 end-0 translate-middle-y me-3"
                       onclick="toggleConfirmPassword()" 
-                      style="cursor: pointer; z-index: 5">
+                      style="cursor: pointer; z-index: 5; margin-top: 20px;">
                   <i class="far fa-eye" id="toggleConfirmPasswordIcon"></i>
                 </span>
               </div>

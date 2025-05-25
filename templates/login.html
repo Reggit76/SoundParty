@@ -12,14 +12,15 @@
         </div>
         <div class="card-body">
           <form action="/login" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="mb-3">
               <label for="username" class="form-label">Имя пользователя</label>
               <input type="text" class="form-control" id="username" name="username" required>
             </div>
-            <div class="mb-3">
+            <div class="mb-3 position-relative">
               <label for="password" class="form-label">Пароль</label>
-              <input type="password" class="form-control" id="password" name="password" required>
-              <span class="position-absolute top-50 end-0 translate-middle-y pe-3" onclick="togglePassword()" style="cursor: pointer;">
+              <input type="password" class="form-control pe-5" id="password" name="password" required>
+              <span class="position-absolute top-50 end-0 translate-middle-y pe-3" onclick="togglePassword()" style="cursor: pointer; margin-top: 20px;">
                 <i class="far fa-eye" id="togglePasswordIcon"></i>
               </span>
             </div>
@@ -49,5 +50,5 @@
         icon.classList.add("fa-eye");
       }
     }
-    </script>
+  </script>
 {% endblock %}
