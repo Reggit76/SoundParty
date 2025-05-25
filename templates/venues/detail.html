@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} — Sound Party{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item"><a href="/venues">Площадки</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ venue.name }}</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Основная информация о площадке -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">
+          <i class="fas fa-building"></i> {{ venue.name }}
+        </h3>
+        <span class="badge bg-primary fs-6">
+          <i class="fas fa-users"></i> Вместимость: {{ venue.capacity }} чел.
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-12">
+            <h5><i class="fas fa-info-circle text-primary"></i> Информация о площадке</h5>
+            <table class="table table-borderless">
+              <tr>
+                <td width="30%"><i class="fas fa-map-marker-alt text-primary"></i> <strong>Адрес:</strong></td>
+                <td>{{ venue.address or "Адрес не указан" }}</td>
+              </tr>
+              <tr>
+                <td><i class="fas fa-users text-primary"></i> <strong>Вместимость:</strong></td>
+                <td>{{ venue.capacity }} человек</td>
+              </tr>
+              <tr>
+                <td><i class="fas fa-calendar-check text-primary"></i> <strong>Проведено мероприятий:</strong></td>
+                <td>{{ venue.events_count }}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        {% if venue.address %}
+        <div class="mt-4">
+          <h5><i class="fas fa-map text-primary"></i> Расположение</h5>
+          <div class="card">
+            <div class="card-body">
+              <p class="mb-0"><i class="fas fa-directions"></i> {{ venue.address }}</p>
+              <a href="https://maps.google.com/?q={{ venue.address }}" target="_blank" class="btn btn-outline-primary btn-sm mt-2">
+                <i class="fas fa-external-link-alt"></i> Открыть в Google Maps
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Мероприятия на этой площадке -->
+    {% if venue.events %}
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Мероприятия на этой площадке</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Мероприятие</th>
+                <th>Дата</th>
+                <th>Время</th>
+                <th>Статус</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in venue.events %}
+              <tr>
+                <td>
+                  <strong>{{ event.description }}</strong>
+                </td>
+                <td>{{ event.date }}</td>
+                <td>{{ event.time }}</td>
+                <td>
+                  <span class="badge bg-{% if event.status == 'анонс' %}success{% elif event.status == 'в процессе' %}warning{% else %}secondary{% endif %}">
+                    {{ event.status }}
+                  </span>
+                </td>
+                <td>
+                  <a href="/events/{{ event.event_id }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-info-circle"></i> Подробнее
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Быстрые действия -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-bolt"></i> Быстрые действия</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="/venues" class="btn btn-outline-primary">
+            <i class="fas fa-list"></i> Все площадки
+          </a>
+          <a href="/events" class="btn btn-outline-info">
+            <i class="fas fa-calendar-alt"></i> Все мероприятия
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Статистика</h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-6">
+            <h3 class="text-primary">{{ venue.events_count }}</h3>
+            <p class="text-muted mb-0">Мероприятий</p>
+          </div>
+          <div class="col-6">
+            <h3 class="text-success">{{ venue.capacity }}</h3>
+            <p class="text-muted mb-0">Вместимость</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Управление для админов -->
+    {% if current_user and current_user.role_id <= 2 %}
+    <div class="card mt-4">
+      <div class="card-header bg-warning">
+        <h5 class="mb-0"><i class="fas fa-tools"></i> Управление</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="/admin/venues/{{ venue.venue_id }}/edit" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-edit"></i> Редактировать
+          </a>
+          <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            <i class="fas fa-trash"></i> Удалить
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Модальное окно удаления -->
+{% if current_user and current_user.role_id <= 2 %}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">
+          <i class="fas fa-exclamation-triangle text-danger"></i> Подтверждение удаления
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Вы уверены, что хотите удалить площадку <strong>{{ venue.name }}</strong>?</p>
+        <p class="text-danger">Это действие нельзя отменить!</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times"></i> Отмена
+        </button>
+        <form action="/admin/delete/venue/{{ venue.venue_id }}" method="post" style="display: inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Удалить
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

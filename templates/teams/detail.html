@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} — Sound Party{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item"><a href="/teams">Команды</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ team.name }}</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Уведомления -->
+{% if request.query_params.get('success') == 'joined' %}
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="fas fa-check-circle"></i> Вы успешно присоединились к команде!
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+{% endif %}
+
+{% if request.query_params.get('error') == 'already_in_team' %}
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <i class="fas fa-exclamation-triangle"></i> Вы уже состоите в команде!
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+{% endif %}
+
+{% if request.query_params.get('error') == 'join_failed' %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="fas fa-times-circle"></i> Не удалось присоединиться к команде. Попробуйте позже.
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Основная информация о команде -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">
+          <i class="fas fa-users"></i> {{ team.name }}
+        </h3>
+        <div>
+          <span class="badge bg-primary fs-6 me-2">
+            <i class="fas fa-star"></i> Рейтинг: {{ team.rating }}
+          </span>
+          <span class="badge bg-secondary fs-6">
+            <i class="fas fa-users"></i> {{ team.participant_count }} участников
+          </span>
+        </div>
+      </div>
+      <div class="card-body">
+        <h5 class="mb-3"><i class="fas fa-user-friends text-primary"></i> Состав команды</h5>
+        
+        {% if team.participants %}
+          <div class="row">
+            {% for participant in team.participants %}
+              <div class="col-md-6 mb-3">
+                <div class="card border-light">
+                  <div class="card-body d-flex align-items-center">
+                    <i class="fas fa-user-circle fa-2x text-primary me-3"></i>
+                    <div>
+                      <h6 class="mb-0">{{ participant.username }}</h6>
+                      {% if participant.fullname %}
+                        <small class="text-muted">{{ participant.fullname }}</small>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> В команде пока нет участников
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- История выступлений -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-trophy"></i> История выступлений</h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">История выступлений команды будет отображаться здесь</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Действия -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-bolt"></i> Действия</h5>
+      </div>
+      <div class="card-body">
+        {% if current_user %}
+          {% set is_member = false %}
+          {% for participant in team.participants %}
+            {% if participant.username == current_user.username %}
+              {% set is_member = true %}
+            {% endif %}
+          {% endfor %}
+          
+          {% if not is_member %}
+            <a href="/teams/{{ team.team_id }}/join" class="btn btn-primary w-100 mb-2">
+              <i class="fas fa-user-plus"></i> Присоединиться к команде
+            </a>
+          {% else %}
+            <div class="alert alert-info mb-2">
+              <i class="fas fa-check"></i> Вы участник этой команды
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="alert alert-warning">
+            <p class="mb-2">Войдите, чтобы присоединиться к команде</p>
+            <a href="/login" class="btn btn-primary btn-sm">
+              <i class="fas fa-sign-in-alt"></i> Войти
+            </a>
+          </div>
+        {% endif %}
+        
+        <a href="/teams" class="btn btn-outline-secondary w-100">
+          <i class="fas fa-arrow-left"></i> Все команды
+        </a>
+      </div>
+    </div>
+
+    <!-- Статистика команды -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-chart-line"></i> Статистика</h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-6">
+            <h3 class="text-primary">{{ team.rating }}</h3>
+            <p class="text-muted mb-0">Рейтинг</p>
+          </div>
+          <div class="col-6">
+            <h3 class="text-success">{{ team.participant_count }}</h3>
+            <p class="text-muted mb-0">Участников</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Управление для капитана команды -->
+    {% if current_user %}
+      {% set is_captain = false %}
+      {% if team.participants and team.participants[0].username == current_user.username %}
+        {% set is_captain = true %}
+      {% endif %}
+      
+      {% if is_captain %}
+      <div class="card mt-4">
+        <div class="card-header bg-warning">
+          <h5 class="mb-0"><i class="fas fa-crown"></i> Управление командой</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-2">Вы капитан команды</p>
+          <div class="d-grid gap-2">
+            <a href="/teams/{{ team.team_id }}/edit" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-edit"></i> Редактировать
+            </a>
+            <a href="/teams/{{ team.team_id }}/invite" class="btn btn-outline-info btn-sm">
+              <i class="fas fa-envelope"></i> Пригласить участников
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

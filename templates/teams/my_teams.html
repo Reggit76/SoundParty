@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Мои команды — Sound Party{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Мои команды</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>
+    <i class="fas fa-user-friends"></i> Мои команды
+  </h1>
+  <a href="/teams/create" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Создать команду
+  </a>
+</div>
+
+{% if teams %}
+  <div class="row g-4">
+    {% for team in teams %}
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-users"></i> {{ team.name }}
+          </h5>
+          <div>
+            <span class="badge bg-primary">
+              <i class="fas fa-star"></i> {{ team.rating }}
+            </span>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Участники команды -->
+          <h6 class="mb-3"><i class="fas fa-user-friends"></i> Участники ({{ team.participant_count }})</h6>
+          {% if team.participants %}
+            <div class="row g-2 mb-3">
+              {% for participant in team.participants[:6] %}
+                <div class="col-6">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-user-circle text-primary me-2"></i>
+                    <small>{{ participant.username }}</small>
+                  </div>
+                </div>
+              {% endfor %}
+              {% if team.participant_count > 6 %}
+                <div class="col-12">
+                  <small class="text-muted">и еще {{ team.participant_count - 6 }} участников...</small>
+                </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <p class="text-muted">В команде пока только вы</p>
+          {% endif %}
+          
+          <!-- Статистика -->
+          <div class="row text-center">
+            <div class="col-4">
+              <div class="border rounded p-2">
+                <h5 class="mb-0 text-primary">{{ team.rating }}</h5>
+                <small class="text-muted">Рейтинг</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="border rounded p-2">
+                <h5 class="mb-0 text-success">{{ team.participant_count }}</h5>
+                <small class="text-muted">Участников</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="border rounded p-2">
+                <h5 class="mb-0 text-info">0</h5>
+                <small class="text-muted">Мероприятий</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="d-grid gap-2 d-md-flex">
+            <a href="/teams/{{ team.team_id }}" class="btn btn-outline-primary flex-fill">
+              <i class="fas fa-info-circle"></i> Подробнее
+            </a>
+            <a href="/teams/{{ team.team_id }}/manage" class="btn btn-primary flex-fill">
+              <i class="fas fa-cog"></i> Управление
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  
+  <!-- Быстрые действия -->
+  <div class="row mt-5">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-rocket"></i> Быстрые действия</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <a href="/events" class="btn btn-outline-primary w-100">
+                <i class="fas fa-calendar-alt"></i> Найти мероприятия
+              </a>
+            </div>
+            <div class="col-md-4">
+              <a href="/teams" class="btn btn-outline-info w-100">
+                <i class="fas fa-users"></i> Все команды
+              </a>
+            </div>
+            <div class="col-md-4">
+              <a href="/rating" class="btn btn-outline-success w-100">
+                <i class="fas fa-trophy"></i> Рейтинг команд
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="alert alert-info">
+    <h4 class="alert-heading">
+      <i class="fas fa-info-circle"></i> У вас пока нет команд
+    </h4>
+    <p>Создайте свою команду или присоединитесь к существующей, чтобы участвовать в мероприятиях!</p>
+    <hr>
+    <div class="d-grid gap-2 d-md-flex">
+      <a href="/teams/create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Создать команду
+      </a>
+      <a href="/teams" class="btn btn-outline-primary">
+        <i class="fas fa-search"></i> Найти команду
+      </a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
