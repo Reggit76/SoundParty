@@ -36,3 +36,14 @@ def delete_booking(conn, booking_id):
     RETURNING *
     """
     return execute_query(conn, query, {"booking_id": booking_id})
+
+def get_booking_by_event_and_team(conn, event_id, team_id):
+    """
+    Проверить, зарегистрирована ли команда на мероприятие
+    """
+    query = """
+    SELECT booking_id, event_id, team_id, number_of_seats
+    FROM "Bookings"
+    WHERE event_id = %(event_id)s AND team_id = %(team_id)s
+    """
+    return execute_query(conn, query, {"event_id": event_id, "team_id": team_id})

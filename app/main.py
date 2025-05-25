@@ -8,6 +8,8 @@ from app.core.lifespan import lifespan
 from app.routers.api import auth as api_auth
 from app.routers.web import auth as web_auth
 from app.routers.web import home as web_home
+from app.routers.web import event as web_event
+from app.routers.web import team as web_team
 
 app = FastAPI(
     title="Sound Party",
@@ -26,6 +28,8 @@ app.include_router(api_auth.router, prefix="/api")
 # Веб-маршруты
 app.include_router(web_home.router)
 app.include_router(web_auth.router)
+app.include_router(web_event.router)
+app.include_router(web_team.router)
 
 # --- Настройка OpenAPI ---
 def custom_openapi():

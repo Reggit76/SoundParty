@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Главная — Sound Party{% endblock %}
 {% block content %}
+  <!-- Уведомления -->
+  {% if request.query_params.get('success') == 'team_created' %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="fas fa-check-circle"></i> Команда успешно создана!
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endif %}
+  
   <h1 class="mb-4">Добро пожаловать в Sound Party!</h1>
   <p class="lead">Присоединяйтесь к музыкальным мероприятиям и участвуйте в соревнованиях</p>
 
@@ -25,8 +33,8 @@
           </p>
         </div>
         <div class="card-footer text-center">
-          <a href="#" class="btn btn-primary w-100">
-            <i class="fas fa-paper-plane"></i> Подать заявку
+          <a href="/event/{{ event.event_id }}" class="btn btn-primary w-100">
+            <i class="fas fa-info-circle"></i> Подробнее
           </a>
         </div>
       </div>

@@ -37,3 +37,16 @@ def delete_participant(conn, participant_id):
     RETURNING *
     """
     return execute_query(conn, query, {"participant_id": participant_id})
+
+def get_participants_by_team_id(conn, team_id):
+    """
+    Получить всех участников команды
+    """
+    query = """
+    SELECT p.participant_id, p.user_id, u.username, u.fullname, u.email
+    FROM "Participants" p
+    JOIN "Users" u ON p.user_id = u.user_id
+    WHERE p.team_id = %(team_id)s
+    ORDER BY u.username
+    """
+    return execute_query(conn, query, {"team_id": team_id})

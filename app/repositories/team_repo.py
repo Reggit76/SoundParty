@@ -45,3 +45,16 @@ def delete_team(conn, team_id):
     RETURNING *
     """
     return execute_query(conn, query, {"team_id": team_id})
+
+def get_teams_by_user_id(conn, user_id):
+    """
+    Получить все команды, в которых состоит пользователь
+    """
+    query = """
+    SELECT DISTINCT t.team_id, t.name, t.rating
+    FROM "Teams" t
+    JOIN "Participants" p ON t.team_id = p.team_id
+    WHERE p.user_id = %(user_id)s
+    ORDER BY t.name
+    """
+    return execute_query(conn, query, {"user_id": user_id})
