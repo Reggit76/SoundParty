@@ -1,35 +1,43 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi.responses import HTMLResponse
 import psycopg2
-from typing import Optional, List
+from datetime import datetime
 
+from app.repositories.event_repo import get_all_events, get_event_by_id
+from app.repositories.venue_repo import get_all_venues
+from app.repositories.user_repo import get_user_by_username
+from app.core.security import decode_access_token
 from app.database import get_db, put_db
 from app.templates import templates
-from app.core.security import decode_access_token
-from app.repositories.user_repo import get_user_by_username
-from app.repositories.event_repo import get_event_by_id
-from app.repositories.team_repo import get_teams_by_user_id
-from app.repositories.participant_repo import get_participants_by_team_id
-from app.repositories.booking_repo import create_booking, get_booking_by_event_and_team
-from app.services.event_service import get_event_by_id_service
 
 router = APIRouter(tags=["web"])
 
-@router.get("/event/{event_id}", response_class=HTMLResponse)
-async def event_detail(request: Request, event_id: int, conn: psycopg2.extensions.connection = Depends(get_db)):
+@router.get("/events", response_class=HTMLResponse)
+async def events_page(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
-        # Получение информации о мероприятии
-        event = get_event_by_id_service(conn, event_id)
-        if not event:
-            raise HTTPException(status_code=404, detail="Мероприятие не найдено")
-        
-        event_data = event[0]
-        
+        # Получение всех мероприятий
+        events = get_all_events(conn)
+        current_date = datetime.now().date()
+
+        # Добавляем флаг 'is_past' к каждому мероприятию
+        for event in events:
+            if isinstance(event["date"], str):
+                event["date"] = datetime.strptime(event["date"], "%Y-%m-%d").date()
+            event["is_past"] = event["date"] < current_date
+            
+            # Форматируем время для отображения
+            if isinstance(event["time"], str):
+                try:
+                    time_obj = datetime.strptime(event["time"], "%H:%M:%S").time()
+                    event["formatted_time"] = time_obj.strftime("%H:%M")
+                except:
+                    event["formatted_time"] = event["time"]
+            else:
+                event["formatted_time"] = str(event["time"])
+
         # Проверка авторизации
         token = request.cookies.get("access_token")
         current_user = None
-        user_teams = []
-        
         if token:
             payload = decode_access_token(token)
             if payload:
@@ -37,88 +45,63 @@ async def event_detail(request: Request, event_id: int, conn: psycopg2.extension
                 user = get_user_by_username(conn, username)
                 if user:
                     current_user = user[0]
-                    # Получаем команды пользователя
-                    user_teams = get_teams_by_user_id(conn, current_user["user_id"])
-                    
-                    # Для каждой команды получаем участников
-                    for team in user_teams:
-                        participants = get_participants_by_team_id(conn, team["team_id"])
-                        team["participants"] = participants
-                        team["participant_count"] = len(participants)
-                        
-                        # Проверяем, зарегистрирована ли команда на это мероприятие
-                        booking = get_booking_by_event_and_team(conn, event_id, team["team_id"])
-                        team["is_registered"] = len(booking) > 0
-        
-        # Определяем максимальное количество участников в команде на мероприятии
-        # По умолчанию 5, но можно добавить это поле в БД
-        max_participants_per_team = 5
-        
-        return templates.TemplateResponse("event_detail.html", {
+
+        return templates.TemplateResponse("events/list.html", {
             "request": request,
-            "event": event_data,
+            "events": events,
             "current_user": current_user,
-            "user_teams": user_teams,
-            "max_participants": max_participants_per_team
+            "page_title": "Мероприятия"
         })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка загрузки мероприятий: {str(e)}")
     finally:
         put_db(conn)
 
-@router.get("/logout")
-def logout():
-    response = RedirectResponse("/", status_code=302)
-    response.delete_cookie(key="access_token")
-    return response
-
-@router.post("/event/{event_id}/register", response_class=RedirectResponse)
-async def register_team_for_event(
-    request: Request,
-    event_id: int,
-    team_id: int = Form(...),
-    participants: List[int] = Form(...),
-    conn: psycopg2.extensions.connection = Depends(get_db)
-):
+@router.get("/events/{event_id}", response_class=HTMLResponse)
+async def event_detail_page(event_id: int, request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
+        # Получение конкретного мероприятия
+        event = get_event_by_id(conn, event_id)
+        if not event:
+            raise HTTPException(status_code=404, detail="Мероприятие не найдено")
+        
+        event = event[0]
+        
+        # Обработка даты и времени
+        if isinstance(event["date"], str):
+            event["date"] = datetime.strptime(event["date"], "%Y-%m-%d").date()
+        
+        event["is_past"] = event["date"] < datetime.now().date()
+        
+        if isinstance(event["time"], str):
+            try:
+                time_obj = datetime.strptime(event["time"], "%H:%M:%S").time()
+                event["formatted_time"] = time_obj.strftime("%H:%M")
+            except:
+                event["formatted_time"] = event["time"]
+        else:
+            event["formatted_time"] = str(event["time"])
+
         # Проверка авторизации
         token = request.cookies.get("access_token")
-        if not token:
-            return RedirectResponse("/login", status_code=302)
-        
-        payload = decode_access_token(token)
-        if not payload:
-            return RedirectResponse("/login", status_code=302)
-        
-        username = payload.get("sub")
-        user = get_user_by_username(conn, username)
-        if not user:
-            return RedirectResponse("/login", status_code=302)
-        
-        current_user = user[0]
-        
-        # Проверяем, что команда принадлежит пользователю
-        user_teams = get_teams_by_user_id(conn, current_user["user_id"])
-        team_ids = [team["team_id"] for team in user_teams]
-        
-        if team_id not in team_ids:
-            raise HTTPException(status_code=403, detail="У вас нет прав на регистрацию этой команды")
-        
-        # Проверяем, что команда еще не зарегистрирована
-        existing_booking = get_booking_by_event_and_team(conn, event_id, team_id)
-        if existing_booking:
-            return RedirectResponse(f"/event/{event_id}?error=already_registered", status_code=302)
-        
-        # Создаем заявку
-        booking_data = {
-            "event_id": event_id,
-            "team_id": team_id,
-            "number_of_seats": len(participants)
-        }
-        
-        create_booking(conn, booking_data)
-        
-        return RedirectResponse(f"/event/{event_id}?success=registered", status_code=302)
-        
+        current_user = None
+        if token:
+            payload = decode_access_token(token)
+            if payload:
+                username = payload.get("sub")
+                user = get_user_by_username(conn, username)
+                if user:
+                    current_user = user[0]
+
+        return templates.TemplateResponse("events/detail.html", {
+            "request": request,
+            "event": event,
+            "current_user": current_user,
+            "page_title": f"Мероприятие: {event['description']}"
+        })
+    except HTTPException:
+        raise
     except Exception as e:
-        return RedirectResponse(f"/event/{event_id}?error={str(e)}", status_code=302)
+        raise HTTPException(status_code=500, detail=f"Ошибка загрузки мероприятия: {str(e)}")
     finally:
         put_db(conn)

@@ -78,8 +78,9 @@ def register_user_web(
     finally:
         put_db(conn)
 
-@router.get("/logout")
-def logout():
+@router.get("/logout", response_class=RedirectResponse)
+def logout_user():
+    """Выход из системы"""
     response = RedirectResponse("/", status_code=302)
     response.delete_cookie(key="access_token")
     return response

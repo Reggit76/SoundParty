@@ -6,10 +6,11 @@ from fastapi.openapi.utils import get_openapi
 # Локальные импорты
 from app.core.lifespan import lifespan
 from app.routers.api import auth as api_auth
-from app.routers.web import auth as web_auth
-from app.routers.web import home as web_home
-from app.routers.web import admin as web_admin
+
 from app.routers.web import (
+    auth as web_auth,
+    home as web_home,
+    admin as web_admin,
     event as web_event,
     profile as web_profile,
     rating as web_rating
