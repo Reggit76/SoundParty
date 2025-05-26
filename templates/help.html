@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% block title %}Помощь — Sound Party{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Помощь</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-10 mx-auto">
+    <div class="text-center mb-5">
+      <h1 class="display-5 mb-3">
+        <i class="fas fa-question-circle text-primary"></i> Центр помощи
+      </h1>
+      <p class="lead text-muted">
+        Найдите ответы на популярные вопросы и руководства по использованию платформы
+      </p>
+    </div>
+
+    <!-- Поиск по справке -->
+    <div class="row mb-5">
+      <div class="col-md-8 mx-auto">
+        <div class="card">
+          <div class="card-body">
+            <div class="input-group">
+              <input type="text" class="form-control" id="helpSearch" 
+                     placeholder="Поиск по справке..." onkeyup="searchHelp()">
+              <button class="btn btn-primary" type="button">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Категории помощи -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <i class="fas fa-user-plus fa-3x text-success mb-3"></i>
+            <h5 class="card-title">Начало работы</h5>
+            <p class="card-text">Регистрация, создание профиля и первые шаги на платформе</p>
+            <a href="#getting-started" class="btn btn-outline-success">Подробнее</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <i class="fas fa-users fa-3x text-primary mb-3"></i>
+            <h5 class="card-title">Команды</h5>
+            <p class="card-text">Создание команд, управление участниками и настройки</p>
+            <a href="#teams" class="btn btn-outline-primary">Подробнее</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <i class="fas fa-calendar-alt fa-3x text-warning mb-3"></i>
+            <h5 class="card-title">Мероприятия</h5>
+            <p class="card-text">Поиск мероприятий, подача заявок и участие</p>
+            <a href="#events" class="btn btn-outline-warning">Подробнее</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Getting Started -->
+    <div id="getting-started" class="mb-5">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">
+            <i class="fas fa-play-circle text-success"></i> Начало работы
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="accordion" id="gettingStartedAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#gs1" aria-expanded="true">
+                  1. Регистрация на платформе
+                </button>
+              </h2>
+              <div id="gs1" class="accordion-collapse collapse show" data-bs-parent="#gettingStartedAccordion">
+                <div class="accordion-body">
+                  <p>Для регистрации выполните следующие шаги:</p>
+                  <ol>
+                    <li>Нажмите кнопку "Регистрация" в правом верхнем углу</li>
+                    <li>Заполните форму регистрации:
+                      <ul>
+                        <li>Имя пользователя (уникальное)</li>
+                        <li>Полное имя</li>
+                        <li>Email адрес</li>
+                        <li>Пароль (минимум 6 символов)</li>
+                      </ul>
+                    </li>
+                    <li>Подтвердите регистрацию</li>
+                    <li>Войдите в систему используя ваши данные</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+            
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#gs2">
+                  2. Настройка профиля
+                </button>
+              </h2>
+              <div id="gs2" class="accordion-collapse collapse" data-bs-parent="#gettingStartedAccordion">
+                <div class="accordion-body">
+                  <p>После входа в систему рекомендуется настроить профиль:</p>
+                  <ul>
+                    <li>Перейдите в раздел "Профиль"</li>
+                    <li>Проверьте и дополните информацию о себе</li>
+                    <li>Настройте уведомления в разделе "Настройки"</li>
+                    <li>Ознакомьтесь с функциями платформы</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teams -->
+    <div id="teams" class="mb-5">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">
+            <i class="fas fa-users text-primary"></i> Работа с командами
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="accordion" id="teamsAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#t1">
+                  Создание команды
+                </button>
+              </h2>
+              <div id="t1" class="accordion-collapse collapse" data-bs-parent="#teamsAccordion">
+                <div class="accordion-body">
+                  <p>Чтобы создать команду:</p>
+                  <ol>
+                    <li>Перейдите в раздел "Команды"</li>
+                    <li>Нажмите кнопку "Создать команду"</li>
+                    <li>Введите название команды</li>
+                    <li>Подтвердите создание</li>
+                  </ol>
+                  <p>После создания команды вы автоматически становитесь её капитаном.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#t2">
+                  Управление участниками
+                </button>
+              </h2>
+              <div id="t2" class="accordion-collapse collapse" data-bs-parent="#teamsAccordion">
+                <div class="accordion-body">
+                  <p>Капитан команды может:</p>
+                  <ul>
+                    <li>Приглашать новых участников по email</li>
+                    <li>Удалять участников из команды</li>
+                    <li>Редактировать информацию о команде</li>
+                    <li>Подавать заявки на мероприятия</li>
+                  </ul>
+                  <p>Для управления командой перейдите на страницу команды и нажмите "Управление".</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Events -->
+    <div id="events" class="mb-5">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">
+            <i class="fas fa-calendar-alt text-warning"></i> Участие в мероприятиях
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="accordion" id="eventsAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#e1">
+                  Поиск мероприятий
+                </button>
+              </h2>
+              <div id="e1" class="accordion-collapse collapse" data-bs-parent="#eventsAccordion">
+                <div class="accordion-body">
+                  <p>Для поиска подходящих мероприятий:</p>
+                  <ul>
+                    <li>Перейдите в раздел "Мероприятия"</li>
+                    <li>Используйте фильтры по статусу и дате</li>
+                    <li>Изучите детальную информацию о мероприятии</li>
+                    <li>Проверьте требования к участникам</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#e2">
+                  Подача заявки
+                </button>
+              </h2>
+              <div id="e2" class="accordion-collapse collapse" data-bs-parent="#eventsAccordion">
+                <div class="accordion-body">
+                  <p>Для подачи заявки на мероприятие:</p>
+                  <ol>
+                    <li>Откройте страницу мероприятия</li>
+                    <li>Нажмите "Подать заявку"</li>
+                    <li>Выберите команду</li>
+                    <li>Укажите участников от команды</li>
+                    <li>Подтвердите заявку</li>
+                  </ol>
+                  <p><strong>Важно:</strong> Убедитесь, что у вас есть команда перед подачей заявки.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Технические вопросы -->
+    <div class="card mb-5">
+      <div class="card-header">
+        <h3 class="mb-0">
+          <i class="fas fa-cog text-info"></i> Технические вопросы
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Проблемы со входом</h5>
+            <ul>
+              <li>Проверьте правильность логина и пароля</li>
+              <li>Убедитесь, что Caps Lock выключен</li>
+              <li>Попробуйте сбросить пароль</li>
+              <li>Очистите кеш браузера</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h5>Проблемы с отображением</h5>
+            <ul>
+              <li>Обновите страницу (Ctrl+F5)</li>
+              <li>Проверьте интернет-соединение</li>
+              <li>Попробуйте другой браузер</li>
+              <li>Отключите блокировщики рекламы</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Контакты поддержки -->
+    <div class="text-center">
+      <div class="card bg-light">
+        <div class="card-body">
+          <h4>Не нашли ответ на свой вопрос?</h4>
+          <p class="mb-3">Обратитесь в службу поддержки, и мы обязательно поможем!</p>
+          <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+            <a href="/contact" class="btn btn-primary">
+              <i class="fas fa-envelope"></i> Связаться с поддержкой
+            </a>
+            <a href="mailto:support@soundparty.ru" class="btn btn-outline-primary">
+              <i class="fas fa-at"></i> support@soundparty.ru
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function searchHelp() {
+  const searchTerm = document.getElementById('helpSearch').value.toLowerCase();
+  const accordionBodies = document.querySelectorAll('.accordion-body');
+  const accordionItems = document.querySelectorAll('.accordion-item');
+  
+  accordionItems.forEach((item, index) => {
+    const body = accordionBodies[index];
+    const text = body.textContent.toLowerCase();
+    const header = item.querySelector('.accordion-button').textContent.toLowerCase();
+    
+    if (searchTerm === '' || text.includes(searchTerm) || header.includes(searchTerm)) {
+      item.style.display = '';
+      if (searchTerm !== '' && (text.includes(searchTerm) || header.includes(searchTerm))) {
+        // Подсвечиваем найденные результаты
+        item.classList.add('border-primary');
+      } else {
+        item.classList.remove('border-primary');
+      }
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Панель организатора — Sound Party{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Панель организатора</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>
+    <i class="fas fa-tools"></i> Панель организатора
+  </h1>
+  <span class="badge bg-warning">
+    <i class="fas fa-user-tie"></i> Организатор
+  </span>
+</div>
+
+<!-- Статистика -->
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="card text-white bg-primary">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="mb-0">{{ stats.total_events }}</h2>
+            <p class="mb-0">Всего мероприятий</p>
+          </div>
+          <i class="fas fa-calendar-alt fa-3x opacity-50"></i>
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <a href="/organizer/events" class="text-white text-decoration-none">
+          Управление <i class="fas fa-arrow-circle-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card text-white bg-success">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="mb-0">{{ stats.active_events }}</h2>
+            <p class="mb-0">Активных</p>
+          </div>
+          <i class="fas fa-play fa-3x opacity-50"></i>
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <a href="/organizer/events" class="text-white text-decoration-none">
+          Подробнее <i class="fas fa-arrow-circle-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card text-white bg-info">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="mb-0">{{ stats.completed_events }}</h2>
+            <p class="mb-0">Завершено</p>
+          </div>
+          <i class="fas fa-check fa-3x opacity-50"></i>
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <a href="/organizer/results" class="text-white text-decoration-none">
+          Результаты <i class="fas fa-arrow-circle-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card text-white bg-warning">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="mb-0">{{ stats.total_bookings }}</h2>
+            <p class="mb-0">Заявок</p>
+          </div>
+          <i class="fas fa-clipboard-list fa-3x opacity-50"></i>
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <a href="/organizer/bookings" class="text-white text-decoration-none">
+          Управление <i class="fas fa-arrow-circle-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Быстрые действия -->
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-bolt"></i> Быстрые действия</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="/admin/events/create" class="btn btn-success">
+            <i class="fas fa-calendar-plus"></i> Создать мероприятие
+          </a>
+          <a href="/organizer/results" class="btn btn-primary">
+            <i class="fas fa-trophy"></i> Добавить результаты
+          </a>
+          <a href="/organizer/bookings" class="btn btn-info">
+            <i class="fas fa-list-alt"></i> Просмотреть заявки
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-clock"></i> Ближайшие мероприятия</h5>
+      </div>
+      <div class="card-body">
+        {% if recent_events %}
+          {% for event in recent_events[:3] %}
+            <div class="d-flex justify-content-between align-items-center {% if not loop.last %}mb-2 pb-2 border-bottom{% endif %}">
+              <div>
+                <strong>{{ event.description }}</strong><br>
+                <small class="text-muted">{{ event.date }} | {{ event.venue_name }}</small>
+              </div>
+              <span class="badge bg-{% if event.status == 'анонс' %}success{% elif event.status == 'в процессе' %}warning{% else %}secondary{% endif %}">
+                {{ event.status }}
+              </span>
+            </div>
+          {% endfor %}
+          <div class="d-grid mt-3">
+            <a href="/organizer/events" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-list"></i> Все мероприятия
+            </a>
+          </div>
+        {% else %}
+          <p class="text-muted">Нет мероприятий</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Последние заявки -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Последние заявки</h5>
+      </div>
+      <div class="card-body">
+        {% if recent_bookings %}
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Мероприятие</th>
+                  <th>Команда</th>
+                  <th>Количество мест</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for booking in recent_bookings %}
+                <tr>
+                  <td>{{ booking.event_name }}</td>
+                  <td>{{ booking.team_name }}</td>
+                  <td><span class="badge bg-secondary">{{ booking.number_of_seats }}</span></td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-eye"></i> Подробнее
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="d-grid">
+            <a href="/organizer/bookings" class="btn btn-outline-primary">
+              <i class="fas fa-list"></i> Все заявки
+            </a>
+          </div>
+        {% else %}
+          <p class="text-muted">Нет заявок</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
