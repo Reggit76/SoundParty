@@ -1,5 +1,5 @@
-{% extends "base.html" %}
-{% block title %}{{ event.description }} — Sound Party{% endblock %}
+{% extends "base/base.html" %}
+{% block title %}Подача заявки — Sound Party{% endblock %}
 {% block content %}
   <!-- Уведомления -->
   {% if request.query_params.get('success') == 'registered' %}
@@ -125,7 +125,7 @@
   </div>
 
   <script>
-    const maxParticipants = { max_participants };
+    const maxParticipants = {{ max_participants }};
     let selectedParticipants = [];
 
     function updateParticipantsList() {

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base/base.html" %}
 {% block title %}{{ page_title }} — Sound Party{% endblock %}
 
 {% block breadcrumbs %}
@@ -164,35 +164,4 @@
     {% endif %}
   </div>
 </div>
-
-<!-- Модальное окно удаления -->
-{% if current_user and current_user.role_id <= 2 %}
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteModalLabel">
-          <i class="fas fa-exclamation-triangle text-danger"></i> Подтверждение удаления
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Вы уверены, что хотите удалить площадку <strong>{{ venue.name }}</strong>?</p>
-        <p class="text-danger">Это действие нельзя отменить!</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="fas fa-times"></i> Отмена
-        </button>
-        <form action="/admin/delete/venue/{{ venue.venue_id }}" method="post" style="display: inline;">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <button type="submit" class="btn btn-danger">
-            <i class="fas fa-trash"></i> Удалить
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-{% endif %}
 {% endblock %}

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base/base.html" %}
 {% block title %}Мои команды — Sound Party{% endblock %}
 
 {% block breadcrumbs %}
@@ -93,36 +93,6 @@
       </div>
     </div>
     {% endfor %}
-  </div>
-  
-  <!-- Быстрые действия -->
-  <div class="row mt-5">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-rocket"></i> Быстрые действия</h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <a href="/events" class="btn btn-outline-primary w-100">
-                <i class="fas fa-calendar-alt"></i> Найти мероприятия
-              </a>
-            </div>
-            <div class="col-md-4">
-              <a href="/teams" class="btn btn-outline-info w-100">
-                <i class="fas fa-users"></i> Все команды
-              </a>
-            </div>
-            <div class="col-md-4">
-              <a href="/rating" class="btn btn-outline-success w-100">
-                <i class="fas fa-trophy"></i> Рейтинг команд
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 {% else %}
   <div class="alert alert-info">

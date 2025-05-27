@@ -1,60 +1,49 @@
-{% extends "base.html" %}
-{% block title %}Присоединиться к команде — Sound Party{% endblock %}
-
-{% block breadcrumbs %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/">Главная</a></li>
-    <li class="breadcrumb-item"><a href="/teams">Команды</a></li>
-    <li class="breadcrumb-item"><a href="/teams/{{ team.team_id }}">{{ team.name }}</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Присоединиться</li>
-  </ol>
-</nav>
-{% endblock %}
-
+{% extends "base/base.html" %}
+{% block title %}Создание команды — Sound Party{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header text-center">
-        <h4 class="mb-0">
-          <i class="fas fa-user-plus"></i> Присоединиться к команде
-        </h4>
-      </div>
-      <div class="card-body">
-        <div class="text-center mb-4">
-          <i class="fas fa-users fa-4x text-primary mb-3"></i>
-          <h5>{{ team.name }}</h5>
-          <p class="text-muted">
-            Рейтинг: <span class="badge bg-primary">{{ team.rating }}</span>
-          </p>
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">Создание новой команды</h4>
         </div>
-        
-        <div class="alert alert-info">
-          <i class="fas fa-info-circle"></i> 
-          <strong>Внимание!</strong> 
-          Присоединившись к команде, вы сможете:
-          <ul class="mb-0 mt-2">
-            <li>Участвовать в мероприятиях от имени команды</li>
-            <li>Зарабатывать очки для общего рейтинга</li>
-            <li>Общаться с другими участниками команды</li>
-          </ul>
-        </div>
-        
-        <form action="/teams/{{ team.team_id }}/join" method="post">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="card-body">
+          {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+          {% endif %}
           
-          <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-success btn-lg">
-              <i class="fas fa-check"></i> Подтвердить присоединение
-            </button>
-            <a href="/teams/{{ team.team_id }}" class="btn btn-secondary">
-              <i class="fas fa-arrow-left"></i> Назад к команде
-            </a>
-          </div>
-        </form>
+          <form action="/teams/create" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="mb-3">
+              <label for="team_name" class="form-label">Название команды</label>
+              <input type="text" 
+                     class="form-control" 
+                     id="team_name" 
+                     name="team_name" 
+                     required
+                     placeholder="Например: Музыкальные гении">
+              <small class="form-text text-muted">
+                Выберите уникальное и запоминающееся название для вашей команды
+              </small>
+            </div>
+            
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i> 
+              После создания команды вы автоматически станете её участником. 
+              Позже вы сможете пригласить других участников.
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-success">
+                <i class="fas fa-users"></i> Создать команду
+              </button>
+              <a href="/" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Назад
+              </a>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
-</div>
 {% endblock %}

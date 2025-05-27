@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base/base.html" %}
 {% block title %}{{ page_title }} — Sound Party{% endblock %}
 
 {% block breadcrumbs %}
@@ -121,13 +121,6 @@
     </div>
     {% endfor %}
   </div>
-  
-  <!-- Сообщение при отсутствии результатов поиска -->
-  <div id="noResults" class="text-center py-5" style="display: none;">
-    <i class="fas fa-search fa-3x text-muted mb-3"></i>
-    <h3 class="text-muted">Площадки не найдены</h3>
-    <p class="text-muted">Попробуйте изменить параметры поиска</p>
-  </div>
 {% else %}
   <div class="text-center py-5">
     <i class="fas fa-building fa-3x text-muted mb-3"></i>
@@ -139,39 +132,6 @@
       </a>
     {% endif %}
   </div>
-{% endif %}
-
-<!-- Статистика -->
-{% if venues %}
-<div class="row mt-5">
-  <div class="col-12">
-    <div class="card">
-      <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Статистика площадок</h5>
-      </div>
-      <div class="card-body">
-        <div class="row text-center">
-          <div class="col-md-3">
-            <h3 class="text-primary">{{ venues|length }}</h3>
-            <p class="text-muted">Всего площадок</p>
-          </div>
-          <div class="col-md-3">
-            <h3 class="text-success">{{ venues|sum(attribute='capacity') }}</h3>
-            <p class="text-muted">Общая вместимость</p>
-          </div>
-          <div class="col-md-3">
-            <h3 class="text-info">{{ venues|sum(attribute='events_count') }}</h3>
-            <p class="text-muted">Проведено мероприятий</p>
-          </div>
-          <div class="col-md-3">
-            <h3 class="text-warning">{{ (venues|sum(attribute='capacity') / venues|length)|round|int }}</h3>
-            <p class="text-muted">Средняя вместимость</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 {% endif %}
 
 <script>
@@ -219,14 +179,6 @@ function filterVenues() {
       card.style.display = 'none';
     }
   });
-  
-  // Показываем/скрываем сообщение "не найдено"
-  const noResults = document.getElementById('noResults');
-  if (visibleCount === 0 && venueCards.length > 0) {
-    noResults.style.display = 'block';
-  } else {
-    noResults.style.display = 'none';
-  }
 }
 
 function sortVenues() {

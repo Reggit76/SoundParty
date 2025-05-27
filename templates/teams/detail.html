@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base/base.html" %}
 {% block title %}{{ page_title }} — Sound Party{% endblock %}
 
 {% block breadcrumbs %}
@@ -16,20 +16,6 @@
 {% if request.query_params.get('success') == 'joined' %}
   <div class="alert alert-success alert-dismissible fade show" role="alert">
     <i class="fas fa-check-circle"></i> Вы успешно присоединились к команде!
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-{% endif %}
-
-{% if request.query_params.get('error') == 'already_in_team' %}
-  <div class="alert alert-warning alert-dismissible fade show" role="alert">
-    <i class="fas fa-exclamation-triangle"></i> Вы уже состоите в команде!
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-{% endif %}
-
-{% if request.query_params.get('error') == 'join_failed' %}
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <i class="fas fa-times-circle"></i> Не удалось присоединиться к команде. Попробуйте позже.
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </div>
 {% endif %}
@@ -164,11 +150,8 @@
         <div class="card-body">
           <p class="text-muted mb-2">Вы капитан команды</p>
           <div class="d-grid gap-2">
-            <a href="/teams/{{ team.team_id }}/edit" class="btn btn-outline-primary btn-sm">
-              <i class="fas fa-edit"></i> Редактировать
-            </a>
-            <a href="/teams/{{ team.team_id }}/invite" class="btn btn-outline-info btn-sm">
-              <i class="fas fa-envelope"></i> Пригласить участников
+            <a href="/teams/{{ team.team_id }}/manage" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-edit"></i> Управление
             </a>
           </div>
         </div>

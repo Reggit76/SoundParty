@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base/base.html" %}
 {% block title %}{{ page_title }} — Sound Party{% endblock %}
 
 {% block breadcrumbs %}
@@ -143,65 +143,6 @@
       </a>
     {% endif %}
   </div>
-{% endif %}
-
-<!-- Топ команд -->
-{% if teams %}
-<div class="row mt-5">
-  <div class="col-12">
-    <div class="card">
-      <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-trophy"></i> Топ команд по рейтингу</h5>
-      </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>Место</th>
-                <th>Команда</th>
-                <th>Рейтинг</th>
-                <th>Участники</th>
-                <th>Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for team in teams|sort(attribute='rating', reverse=true)[:10] %}
-              <tr>
-                <td>
-                  <span class="badge bg-{% if loop.index == 1 %}warning{% elif loop.index == 2 %}secondary{% elif loop.index == 3 %}danger{% else %}light{% endif %}">
-                    {% if loop.index == 1 %}
-                      <i class="fas fa-crown"></i>
-                    {% elif loop.index == 2 %}
-                      <i class="fas fa-medal"></i>
-                    {% elif loop.index == 3 %}
-                      <i class="fas fa-award"></i>
-                    {% else %}
-                      {{ loop.index }}
-                    {% endif %}
-                  </span>
-                </td>
-                <td>
-                  <strong>{{ team.name }}</strong>
-                </td>
-                <td>
-                  <span class="badge bg-primary">{{ team.rating }}</span>
-                </td>
-                <td>{{ team.participant_count }}</td>
-                <td>
-                  <a href="/teams/{{ team.team_id }}" class="btn btn-sm btn-outline-primary">
-                    Подробнее
-                  </a>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 {% endif %}
 
 <script>

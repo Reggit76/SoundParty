@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base/base.html" %}
 {% block title %}Создание команды — Sound Party{% endblock %}
 {% block content %}
   <div class="row justify-content-center">
@@ -13,6 +13,7 @@
           {% endif %}
           
           <form action="/teams/create" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="mb-3">
               <label for="team_name" class="form-label">Название команды</label>
               <input type="text" 
