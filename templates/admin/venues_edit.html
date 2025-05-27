@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Редактирование площадки — Sound Party{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item"><a href="/admin">Панель администратора</a></li>
+    <li class="breadcrumb-item"><a href="/admin/venues">Площадки</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Редактирование</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1>
+        <i class="fas fa-building"></i> Редактирование площадки
+      </h1>
+      <div>
+        <a href="/venues/{{ venue.venue_id }}" class="btn btn-outline-info me-2">
+          <i class="fas fa-eye"></i> Просмотр
+        </a>
+        <a href="/admin/venues" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left"></i> Назад
+        </a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-edit"></i> Площадка: {{ venue.name }}
+        </h5>
+      </div>
+      <div class="card-body">
+        <form action="/admin/venues/{{ venue.venue_id }}/edit" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          
+          <div class="mb-3">
+            <label for="name" class="form-label">Название площадки *</label>
+            <input type="text" class="form-control" id="name" name="name" 
+                   value="{{ venue.name }}" required>
+            <small class="text-muted">Название должно быть уникальным и понятным</small>
+          </div>
+          
+          <div class="mb-3">
+            <label for="address" class="form-label">Адрес *</label>
+            <textarea class="form-control" id="address" name="address" rows="3" required>{{ venue.address }}</textarea>
+            <small class="text-muted">Полный адрес площадки для навигации</small>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="capacity" class="form-label">Вместимость (человек) *</label>
+              <input type="number" class="form-control" id="capacity" name="capacity" 
+                     value="{{ venue.capacity }}" min="1" required>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Категория по вместимости</label>
+              <input type="text" class="form-control" id="capacityCategory" readonly>
+              <small class="text-muted">Автоматически определяется по вместимости</small>
+            </div>
+          </div>
+          
+          <!-- Дополнительная информация -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="card bg-light">
+                <div class="card-body">
+                  <h6><i class="fas fa-info-circle"></i> Информация о площадке</h6>
+                  <div class="row">
+                    <div class="col-md-4">
+                      <p><strong>ID площадки:</strong> {{ venue.venue_id }}</p>
+                    </div>
+                    <div class="col-md-4">
+                      <p><strong>Текущая вместимость:</strong> {{ venue.capacity }} чел.</p>
+                    </div>
+                    <div class="col-md-4">
+                      <p><strong>Статус:</strong> 
+                        <span class="badge bg-success">Активна</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <a href="/admin/venues" class="btn btn-secondary">
+              <i class="fas fa-times"></i> Отмена
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Сохранить изменения
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Дополнительные действия -->
+    <div class="row mt-4">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-calendar-alt"></i> Мероприятия на площадке</h6>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">Просмотрите все мероприятия, проводимые на этой площадке</p>
+            <a href="/admin/events?venue={{ venue.venue_id }}" class="btn btn-outline-info btn-sm">
+              <i class="fas fa-list"></i> Показать мероприятия
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-map-marker-alt"></i> Расположение</h6>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">Просмотрите местоположение на карте</p>
+            <a href="https://maps.google.com/?q={{ venue.address }}" target="_blank" class="btn btn-outline-success btn-sm">
+              <i class="fas fa-external-link-alt"></i> Открыть на карте
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Предупреждения -->
+    <div class="alert alert-warning mt-3">
+      <i class="fas fa-exclamation-triangle"></i> 
+      <strong>Внимание!</strong> Изменение данных площадки может повлиять на все связанные мероприятия.
+    </div>
+  </div>
+</div>
+
+<script>
+// Определение категории по вместимости
+document.addEventListener('DOMContentLoaded', function() {
+  const capacityInput = document.getElementById('capacity');
+  const categoryInput = document.getElementById('capacityCategory');
+  
+  function updateCategory() {
+    const capacity = parseInt(capacityInput.value);
+    let category = '';
+    
+    if (capacity <= 50) {
+      category = 'Малая (до 50 чел.)';
+    } else if (capacity <= 200) {
+      category = 'Средняя (51-200 чел.)';
+    } else if (capacity <= 500) {
+      category = 'Большая (201-500 чел.)';
+    } else if (capacity <= 1000) {
+      category = 'Очень большая (501-1000 чел.)';
+    } else {
+      category = 'Огромная (более 1000 чел.)';
+    }
+    
+    categoryInput.value = category;
+  }
+  
+  capacityInput.addEventListener('input', updateCategory);
+  updateCategory(); // Начальная установка
+});
+
+// Валидация формы
+document.querySelector('form').addEventListener('submit', function(e) {
+  const capacity = parseInt(document.getElementById('capacity').value);
+  
+  if (capacity <= 0) {
+    e.preventDefault();
+    alert('Вместимость должна быть больше нуля');
+    return;
+  }
+  
+  if (capacity > 100000) {
+    if (!confirm('Вместимость очень большая (' + capacity + ' чел.). Вы уверены?')) {
+      e.preventDefault();
+    }
+  }
+});
+</script>
+{% endblock %}

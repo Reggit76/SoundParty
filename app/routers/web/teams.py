@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, Form, Request, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse
 import psycopg2
 
+from app.core.csrf import csrf_protect_dependency, get_csrf_token
 from app.repositories.team_repo import get_all_teams, get_team_by_id
 from app.repositories.participant_repo import get_all_participants
 from app.repositories.user_repo import get_user_by_username
@@ -92,5 +93,88 @@ async def team_detail_page(team_id: int, request: Request, conn: psycopg2.extens
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка загрузки команды: {str(e)}")
+    finally:
+        put_db(conn)
+
+@router.get("/teams/create", response_class=HTMLResponse)
+async def teams_create_page(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
+    try:
+        # Проверка авторизации
+        token = request.cookies.get("access_token")
+        if not token:
+            return RedirectResponse("/login", status_code=302)
+        
+        payload = decode_access_token(token)
+        if not payload:
+            return RedirectResponse("/login", status_code=302)
+        
+        username = payload.get("sub")
+        user = get_user_by_username(conn, username)
+        if not user:
+            return RedirectResponse("/login", status_code=302)
+        
+        current_user = user[0]
+        csrf_token = get_csrf_token(request)
+        
+        return templates.TemplateResponse("create_team.html", {
+            "request": request,
+            "current_user": current_user,
+            "csrf_token": csrf_token
+        })
+    finally:
+        put_db(conn)
+
+@router.post("/teams/create", response_class=RedirectResponse)
+async def teams_create(
+    request: Request,
+    team_name: str = Form(...),
+    csrf_token: str = Form(...),
+    conn: psycopg2.extensions.connection = Depends(get_db),
+    _: None = Depends(csrf_protect_dependency)
+):
+    try:
+        # Проверка авторизации
+        token = request.cookies.get("access_token")
+        if not token:
+            return RedirectResponse("/login", status_code=302)
+        
+        payload = decode_access_token(token)
+        if not payload:
+            return RedirectResponse("/login", status_code=302)
+        
+        username = payload.get("sub")
+        user = get_user_by_username(conn, username)
+        if not user:
+            return RedirectResponse("/login", status_code=302)
+        
+        current_user = user[0]
+        
+        # Создание команды
+        from app.repositories.team_repo import create_team
+        team_data = {
+            "name": team_name,
+            "rating": 0
+        }
+        
+        team_result = create_team(conn, team_data)
+        team_id = team_result[0]["team_id"]
+        
+        # Добавление создателя в команду как участника
+        from app.repositories.participant_repo import create_participant
+        participant_data = {
+            "user_id": current_user["user_id"],
+            "team_id": team_id
+        }
+        create_participant(conn, participant_data)
+        
+        return RedirectResponse("/?success=team_created", status_code=302)
+    except Exception as e:
+        csrf_token_new = get_csrf_token(request)
+        return templates.TemplateResponse("create_team.html", {
+            "request": request,
+            "current_user": current_user,
+            "csrf_token": csrf_token_new,
+            "error": f"Ошибка создания команды: {str(e)}"
+        })
     finally:
         put_db(conn)

@@ -2,6 +2,8 @@ from fastapi import FastAPI, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import RedirectResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # Локальные импорты
 from app.core.lifespan import lifespan
@@ -32,7 +34,8 @@ from app.routers.web import (
     rating as web_rating,
     teams as web_teams,
     venues as web_venues,
-    booking as web_booking
+    booking as web_booking,
+    errors as web_errors
 )
 
 app = FastAPI(
@@ -70,6 +73,7 @@ app.include_router(web_profile.router)
 app.include_router(web_teams.router)
 app.include_router(web_venues.router)
 app.include_router(web_booking.router)
+app.include_router(web_errors.router)
 
 # --- Настройка OpenAPI ---
 def custom_openapi():
@@ -95,4 +99,17 @@ def custom_openapi():
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
-app.openapi = custom_openapi
+class CSRFErrorMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        try:
+            response = await call_next(request)
+            return response
+        except HTTPException as exc:
+            if exc.status_code == 403 and "CSRF" in str(exc.detail):
+                return RedirectResponse(url="/403", status_code=302)
+            raise exc
+        
+
+
+app.openapi = custom_openapi 
+app.add_middleware(CSRFErrorMiddleware)

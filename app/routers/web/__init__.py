@@ -8,6 +8,7 @@ from .rating import router as rating_router
 from .teams import router as teams_router
 from .venues import router as venues_router
 from .booking import router as booking_router
+from .errors import router as errors_router
 
 __all__ = [
     "auth_router",
@@ -18,5 +19,6 @@ __all__ = [
     "rating_router",
     "teams_router",
     "venues_router",
-    "booking_router"
+    "booking_router",
+    "errors_router"
 ]

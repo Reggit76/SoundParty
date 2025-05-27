@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Создание пользователя — Sound Party{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item"><a href="/admin">Панель администратора</a></li>
+    <li class="breadcrumb-item"><a href="/admin/users">Пользователи</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Создание</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1>
+        <i class="fas fa-user-plus"></i> Создание пользователя
+      </h1>
+      <a href="/admin/users" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к пользователям
+      </a>
+    </div>
+
+    <!-- Сообщения об ошибках -->
+    {% if error %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-user-circle"></i> Информация о пользователе
+        </h5>
+      </div>
+      <div class="card-body">
+        <form action="/admin/users/create" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="username" class="form-label">Имя пользователя *</label>
+              <input type="text" class="form-control" id="username" name="username" required>
+              <small class="text-muted">Уникальное имя для входа в систему</small>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label for="fullname" class="form-label">Полное имя *</label>
+              <input type="text" class="form-control" id="fullname" name="fullname" required>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="email" class="form-label">Email *</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label for="role_id" class="form-label">Роль *</label>
+              <select class="form-select" id="role_id" name="role_id" required>
+                <option value="">Выберите роль</option>
+                <option value="1">Администратор</option>
+                <option value="2">Организатор</option>
+                <option value="3" selected>Участник</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="password" class="form-label">Пароль *</label>
+              <input type="password" class="form-control" id="password" name="password" required minlength="6">
+              <small class="text-muted">Минимум 6 символов</small>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label for="confirm_password" class="form-label">Подтверждение пароля *</label>
+              <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="6">
+            </div>
+          </div>
+          
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> 
+            Поля отмеченные * обязательны для заполнения
+          </div>
+          
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="/admin/users" class="btn btn-secondary">
+              <i class="fas fa-times"></i> Отмена
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Создать пользователя
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Проверка совпадения паролей
+document.addEventListener('DOMContentLoaded', function() {
+  const password = document.getElementById('password');
+  const confirmPassword = document.getElementById('confirm_password');
+  const form = password.closest('form');
+  
+  function checkPasswords() {
+    if (password.value && confirmPassword.value) {
+      if (password.value !== confirmPassword.value) {
+        confirmPassword.setCustomValidity('Пароли не совпадают');
+      } else {
+        confirmPassword.setCustomValidity('');
+      }
+    }
+  }
+  
+  password.addEventListener('input', checkPasswords);
+  confirmPassword.addEventListener('input', checkPasswords);
+  
+  form.addEventListener('submit', function(e) {
+    if (password.value !== confirmPassword.value) {
+      e.preventDefault();
+      alert('Пароли не совпадают');
+    }
+  });
+});
+</script>
+{% endblock %}

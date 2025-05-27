@@ -123,3 +123,31 @@ def update_profile(
         return RedirectResponse("/profile?success=1", status_code=302)
     finally:
         put_db(conn)
+
+@router.get("/settings", response_class=HTMLResponse)
+def settings_page(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
+    try:
+        # Проверка авторизации
+        token = request.cookies.get("access_token")
+        if not token:
+            return RedirectResponse("/login", status_code=302)
+        
+        payload = decode_access_token(token)
+        if not payload:
+            return RedirectResponse("/login", status_code=302)
+        
+        username = payload.get("sub")
+        user = get_user_by_username(conn, username)
+        if not user:
+            return RedirectResponse("/login", status_code=302)
+        
+        current_user = user[0]
+        csrf_token = get_csrf_token(request)
+        
+        return templates.TemplateResponse("settings.html", {
+            "request": request,
+            "current_user": current_user,
+            "csrf_token": csrf_token
+        })
+    finally:
+        put_db(conn)
