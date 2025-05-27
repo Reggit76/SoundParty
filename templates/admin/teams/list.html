@@ -1,0 +1,437 @@
+{% extends "base/base.html" %}
+{% block title %}Управление командами — Админ-панель{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item"><a href="/admin">Админ-панель</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Команды</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Уведомления -->
+{% if request.query_params.get('success') == 'updated' %}
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="fas fa-check-circle"></i> Команда успешно обновлена!
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+{% endif %}
+
+{% if request.query_params.get('deleted') == '1' %}
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="fas fa-check-circle"></i> Команда успешно удалена!
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+{% endif %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>
+    <i class="fas fa-users-cog"></i> Управление командами
+  </h1>
+  <div>
+    <button type="button" class="btn btn-outline-primary" onclick="exportTeams()">
+      <i class="fas fa-download"></i> Экспорт
+    </button>
+  </div>
+</div>
+
+<!-- Статистика команд -->
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <h3 class="text-primary">{{ teams|length }}</h3>
+        <p class="text-muted mb-0">Всего команд</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <h3 class="text-success">{{ teams|selectattr('participant_count', 'greaterthan', 0)|list|length }}</h3>
+        <p class="text-muted mb-0">Активные команды</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <h3 class="text-info">{{ teams|map(attribute='participant_count')|sum }}</h3>
+        <p class="text-muted mb-0">Всего участников</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <h3 class="text-warning">{{ teams|map(attribute='rating')|max if teams else 0 }}</h3>
+        <p class="text-muted mb-0">Максимальный рейтинг</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-3">
+        <label for="ratingFilter" class="form-label">Рейтинг</label>
+        <select class="form-select" id="ratingFilter" onchange="filterTeams()">
+          <option value="">Любой рейтинг</option>
+          <option value="0">0 баллов</option>
+          <option value="1-100">1-100 баллов</option>
+          <option value="100-500">100-500 баллов</option>
+          <option value="500+">500+ баллов</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="membersFilter" class="form-label">Участники</label>
+        <select class="form-select" id="membersFilter" onchange="filterTeams()">
+          <option value="">Любое количество</option>
+          <option value="0">Без участников</option>
+          <option value="1">1 участник</option>
+          <option value="2-5">2-5 участников</option>
+          <option value="5+">5+ участников</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="searchInput" class="form-label">Поиск</label>
+        <input type="text" class="form-control" id="searchInput" 
+               placeholder="Поиск по названию команды..." onkeyup="filterTeams()">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="button" class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+          <i class="fas fa-times"></i> Очистить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Таблица команд -->
+{% if teams %}
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th width="60">ID</th>
+              <th>Название</th>
+              <th class="text-center">Участники</th>
+              <th class="text-center">Рейтинг</th>
+              <th class="text-center">Статус</th>
+              <th class="text-center" width="150">Действия</th>
+            </tr>
+          </thead>
+          <tbody id="teamsTableBody">
+            {% for team in teams %}
+            <tr class="team-row" 
+                data-rating="{{ team.rating }}"
+                data-members="{{ team.participant_count }}"
+                data-search="{{ team.name|lower }}">
+              <td>
+                <strong>{{ team.team_id }}</strong>
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-users fa-2x text-primary me-3"></i>
+                  <div>
+                    <div><strong>{{ team.name }}</strong></div>
+                    <small class="text-muted">Создана недавно</small>
+                  </div>
+                </div>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-secondary fs-6">{{ team.participant_count }}</span>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-primary fs-6">{{ team.rating }}</span>
+              </td>
+              <td class="text-center">
+                {% if team.participant_count == 0 %}
+                  <span class="badge bg-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Пустая
+                  </span>
+                {% elif team.participant_count == 1 %}
+                  <span class="badge bg-info">
+                    <i class="fas fa-user"></i> Неполная
+                  </span>
+                {% else %}
+                  <span class="badge bg-success">
+                    <i class="fas fa-check"></i> Активная
+                  </span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <div class="btn-group" role="group">
+                  <a href="/teams/{{ team.team_id }}" class="btn btn-sm btn-outline-primary" title="Просмотр">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <a href="/admin/teams/{{ team.team_id }}/edit" class="btn btn-sm btn-outline-warning" title="Редактировать">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <button type="button" class="btn btn-sm btn-outline-info" 
+                          onclick="viewMembers({{ team.team_id }})"
+                          title="Участники">
+                    <i class="fas fa-users"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" 
+                          data-bs-toggle="modal" 
+                          data-bs-target="#deleteModal{{ team.team_id }}"
+                          title="Удалить">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальные окна удаления для каждой команды -->
+  {% for team in teams %}
+  <div class="modal fade" id="deleteModal{{ team.team_id }}" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-danger">
+            <i class="fas fa-exclamation-triangle"></i> Удаление команды
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger">
+            <h6 class="alert-heading">Внимание!</h6>
+            <p class="mb-0">Вы уверены, что хотите удалить команду <strong>{{ team.name }}</strong>?</p>
+          </div>
+          
+          <p>Это действие приведет к:</p>
+          <ul>
+            <li>Удалению всех участников из команды</li>
+            <li>Отмене всех заявок команды</li>
+            <li>Потере истории результатов</li>
+            <li>Невозможности восстановления данных</li>
+          </ul>
+          
+          <div class="card bg-light">
+            <div class="card-body">
+              <strong>Информация о команде:</strong>
+              <ul class="mb-0 mt-2">
+                <li>Название: {{ team.name }}</li>
+                <li>Участников: {{ team.participant_count }}</li>
+                <li>Рейтинг: {{ team.rating }}</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="alert alert-warning mt-3">
+            <strong>Это действие нельзя отменить!</strong>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Отмена
+          </button>
+          <form action="/admin/delete/team/{{ team.team_id }}" method="post" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-trash"></i> Удалить команду
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Пагинация -->
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <div>
+      <small class="text-muted">
+        Показано команд: <span id="visibleCount">{{ teams|length }}</span> из {{ teams|length }}
+      </small>
+    </div>
+  </div>
+{% else %}
+  <div class="alert alert-info text-center">
+    <i class="fas fa-info-circle fa-3x mb-3"></i>
+    <h4>Команд пока нет</h4>
+    <p class="mb-3">Команды создаются пользователями автоматически при регистрации на мероприятия.</p>
+    <a href="/teams" class="btn btn-primary">
+      <i class="fas fa-users"></i> Посмотреть публичные команды
+    </a>
+  </div>
+{% endif %}
+
+<!-- Модальное окно просмотра участников -->
+<div class="modal fade" id="membersModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-users"></i> Участники команды
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="membersContent">
+        <!-- Содержимое загружается динамически -->
+        <div class="text-center">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+          <p class="mt-2">Загрузка участников...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times"></i> Закрыть
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Фильтрация команд
+function filterTeams() {
+  const ratingFilter = document.getElementById('ratingFilter').value;
+  const membersFilter = document.getElementById('membersFilter').value;
+  const searchInput = document.getElementById('searchInput').value.toLowerCase();
+  const rows = document.querySelectorAll('.team-row');
+  
+  let visibleCount = 0;
+  
+  rows.forEach(row => {
+    const rating = parseInt(row.dataset.rating);
+    const members = parseInt(row.dataset.members);
+    const searchText = row.dataset.search;
+    
+    let showRow = true;
+    
+    // Фильтр по рейтингу
+    if (ratingFilter) {
+      switch(ratingFilter) {
+        case '0':
+          showRow = rating === 0;
+          break;
+        case '1-100':
+          showRow = rating >= 1 && rating <= 100;
+          break;
+        case '100-500':
+          showRow = rating > 100 && rating <= 500;
+          break;
+        case '500+':
+          showRow = rating > 500;
+          break;
+      }
+    }
+    
+    // Фильтр по участникам
+    if (membersFilter && showRow) {
+      switch(membersFilter) {
+        case '0':
+          showRow = members === 0;
+          break;
+        case '1':
+          showRow = members === 1;
+          break;
+        case '2-5':
+          showRow = members >= 2 && members <= 5;
+          break;
+        case '5+':
+          showRow = members > 5;
+          break;
+      }
+    }
+    
+    // Поиск
+    if (searchInput && showRow) {
+      showRow = searchText.includes(searchInput);
+    }
+    
+    if (showRow) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  
+  // Обновляем счетчик
+  const visibleCountElement = document.getElementById('visibleCount');
+  if (visibleCountElement) {
+    visibleCountElement.textContent = visibleCount;
+  }
+}
+
+function clearFilters() {
+  document.getElementById('ratingFilter').value = '';
+  document.getElementById('membersFilter').value = '';
+  document.getElementById('searchInput').value = '';
+  filterTeams();
+}
+
+function viewMembers(teamId) {
+  const modal = new bootstrap.Modal(document.getElementById('membersModal'));
+  modal.show();
+  
+  // Имитация загрузки участников команды
+  setTimeout(() => {
+    document.getElementById('membersContent').innerHTML = `
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Участник</th>
+              <th>Email</th>
+              <th>Дата вступления</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-user-circle fa-2x text-primary me-2"></i>
+                  <div>
+                    <strong>Иван Иванов</strong><br>
+                    <small class="text-muted">@ivan_ivanov</small>
+                  </div>
+                </div>
+              </td>
+              <td>ivan@example.com</td>
+              <td>01.01.2024</td>
+              <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeMember(${teamId}, 1)">
+                  <i class="fas fa-user-minus"></i> Исключить
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> 
+        Подробная информация об участниках команды будет реализована.
+      </div>
+    `;
+  }, 1000);
+}
+
+function removeMember(teamId, memberId) {
+  if (confirm('Исключить участника из команды?')) {
+    alert(`Участник будет исключен из команды ${teamId}`);
+  }
+}
+
+function exportTeams() {
+  alert('Экспорт списка команд будет реализован');
+}
+</script>
+{% endblock %}

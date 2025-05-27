@@ -1,0 +1,281 @@
+{% extends "base/base.html" %}
+{% block title %}Создание пользователя — Админ-панель{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item"><a href="/admin">Админ-панель</a></li>
+    <li class="breadcrumb-item"><a href="/admin/users">Пользователи</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Создание</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+          <i class="fas fa-user-plus"></i> Создание нового пользователя
+        </h4>
+      </div>
+      <div class="card-body">
+        {% if error %}
+          <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i> {{ error }}
+          </div>
+        {% endif %}
+        
+        <form action="/admin/users/create" method="post" id="createUserForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          
+          <!-- Основная информация -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="username" class="form-label">
+                  <i class="fas fa-user"></i> Имя пользователя <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" id="username" name="username" required
+                       placeholder="Введите логин пользователя">
+                <div class="form-text">Логин должен быть уникальным и содержать только латинские буквы, цифры и символы</div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="fullname" class="form-label">
+                  <i class="fas fa-id-card"></i> Полное имя <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" id="fullname" name="fullname" required
+                       placeholder="Введите полное имя">
+              </div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="email" class="form-label">
+              <i class="fas fa-envelope"></i> Email адрес <span class="text-danger">*</span>
+            </label>
+            <input type="email" class="form-control" id="email" name="email" required
+                   placeholder="user@example.com">
+          </div>
+          
+          <!-- Пароль -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="password" class="form-label">
+                  <i class="fas fa-lock"></i> Пароль <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <input type="password" class="form-control" id="password" name="password" required
+                         placeholder="Введите пароль">
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
+                    <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                  </button>
+                </div>
+                <div class="form-text">Минимум 6 символов, рекомендуется использовать буквы, цифры и символы</div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="password_confirm" class="form-label">
+                  <i class="fas fa-lock"></i> Подтверждение пароля <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <input type="password" class="form-control" id="password_confirm" name="password_confirm" required
+                         placeholder="Повторите пароль">
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password_confirm')">
+                    <i class="fas fa-eye" id="togglePasswordConfirmIcon"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Роль пользователя -->
+          <div class="mb-4">
+            <label for="role_id" class="form-label">
+              <i class="fas fa-user-tag"></i> Роль <span class="text-danger">*</span>
+            </label>
+            <select class="form-select" id="role_id" name="role_id" required onchange="showRoleInfo()">
+              <option value="">Выберите роль</option>
+              <option value="3" selected>Участник</option>
+              <option value="2">Организатор</option>
+              <option value="1">Администратор</option>
+            </select>
+            
+            <!-- Информация о ролях -->
+            <div id="roleInfo" class="mt-3">
+              <div class="alert alert-info role-info" id="role-3" style="display: block;">
+                <h6><i class="fas fa-user"></i> Участник</h6>
+                <p class="mb-0">Может создавать команды, подавать заявки на мероприятия, участвовать в соревнованиях.</p>
+              </div>
+              
+              <div class="alert alert-warning role-info" id="role-2" style="display: none;">
+                <h6><i class="fas fa-user-tie"></i> Организатор</h6>
+                <p class="mb-0">Может создавать и управлять мероприятиями, принимать заявки, добавлять результаты.</p>
+              </div>
+              
+              <div class="alert alert-danger role-info" id="role-1" style="display: none;">
+                <h6><i class="fas fa-user-shield"></i> Администратор</h6>
+                <p class="mb-0">Полный доступ ко всем функциям системы: управление пользователями, мероприятиями, настройками.</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Дополнительные опции -->
+          <div class="mb-4">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="send_welcome_email" name="send_welcome_email" checked>
+              <label class="form-check-label" for="send_welcome_email">
+                <i class="fas fa-envelope"></i> Отправить приветственное письмо на email
+              </label>
+            </div>
+            
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="force_password_change" name="force_password_change">
+              <label class="form-check-label" for="force_password_change">
+                <i class="fas fa-key"></i> Требовать смену пароля при первом входе
+              </label>
+            </div>
+          </div>
+          
+          <!-- Кнопки действий -->
+          <div class="row">
+            <div class="col-md-6">
+              <button type="submit" class="btn btn-success w-100">
+                <i class="fas fa-save"></i> Создать пользователя
+              </button>
+            </div>
+            <div class="col-md-6">
+              <a href="/admin/users" class="btn btn-secondary w-100">
+                <i class="fas fa-arrow-left"></i> Вернуться к списку
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Подсказки -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Рекомендации</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Безопасность паролей</h6>
+            <ul class="small text-muted">
+              <li>Используйте пароли длиной не менее 8 символов</li>
+              <li>Включайте буквы верхнего и нижнего регистра</li>
+              <li>Добавляйте цифры и специальные символы</li>
+              <li>Избегайте очевидных паролей</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6>Назначение ролей</h6>
+            <ul class="small text-muted">
+              <li>Администратор - только для доверенных лиц</li>
+              <li>Организатор - для ведущих мероприятия</li>
+              <li>Участник - стандартная роль для игроков</li>
+              <li>Роль можно изменить позже</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePassword(fieldId) {
+  const field = document.getElementById(fieldId);
+  const icon = document.getElementById(`toggle${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Icon`);
+  
+  if (field.type === 'password') {
+    field.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    field.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+
+function showRoleInfo() {
+  const roleSelect = document.getElementById('role_id');
+  const roleInfos = document.querySelectorAll('.role-info');
+  
+  // Скрываем все информационные блоки
+  roleInfos.forEach(info => info.style.display = 'none');
+  
+  // Показываем нужный блок
+  if (roleSelect.value) {
+    const selectedInfo = document.getElementById(`role-${roleSelect.value}`);
+    if (selectedInfo) {
+      selectedInfo.style.display = 'block';
+    }
+  }
+}
+
+// Валидация формы
+document.getElementById('createUserForm').addEventListener('submit', function(e) {
+  const password = document.getElementById('password').value;
+  const passwordConfirm = document.getElementById('password_confirm').value;
+  const username = document.getElementById('username').value;
+  
+  // Проверка совпадения паролей
+  if (password !== passwordConfirm) {
+    e.preventDefault();
+    alert('Пароли не совпадают!');
+    return;
+  }
+  
+  // Проверка длины пароля
+  if (password.length < 6) {
+    e.preventDefault();
+    alert('Пароль должен содержать минимум 6 символов!');
+    return;
+  }
+  
+  // Проверка логина
+  if (username.length < 3) {
+    e.preventDefault();
+    alert('Логин должен содержать минимум 3 символа!');
+    return;
+  }
+  
+  // Проверка логина на допустимые символы
+  const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+  if (!usernameRegex.test(username)) {
+    e.preventDefault();
+    alert('Логин может содержать только латинские буквы, цифры, дефисы и подчеркивания!');
+    return;
+  }
+});
+
+// Проверка совпадения паролей в реальном времени
+document.getElementById('password_confirm').addEventListener('input', function() {
+  const password = document.getElementById('password').value;
+  const passwordConfirm = this.value;
+  
+  if (passwordConfirm && password !== passwordConfirm) {
+    this.classList.add('is-invalid');
+  } else {
+    this.classList.remove('is-invalid');
+  }
+});
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+  showRoleInfo();
+});
+</script>
+{% endblock %}
