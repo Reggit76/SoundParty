@@ -64,7 +64,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setMobileOpen(!mobileOpen);
   };
 
-  // Основные пункты меню
+  // Основные пункты меню (доступны всем)
   const mainMenuItems = [
     { text: 'Главная', icon: <Home />, path: '/' },
     { text: 'Мероприятия', icon: <Event />, path: '/events' },
@@ -77,16 +77,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { text: 'Профиль', icon: <Person />, path: '/profile' },
     { text: 'Бронирования', icon: <BookOnline />, path: '/bookings' },
     { text: 'Платежи', icon: <Payment />, path: '/payments' },
-    { text: 'Результаты', icon: <EmojiEvents />, path: '/event-results' },
+  ];
+
+  // Пункты меню для организаторов и администраторов
+  const organizerMenuItems = [
+    { text: 'Результаты мероприятий', icon: <EmojiEvents />, path: '/event-results' },
   ];
 
   // Пункты меню для администраторов
   const adminMenuItems = [
     { text: 'Управление пользователями', icon: <Settings />, path: '/admin/users' },
-    { text: 'Управление ролями', icon: <AdminPanelSettings />, path: '/admin/roles' },
   ];
 
   const isAdmin = userRole === 1;
+  const isOrganizer = userRole === 2;
 
   const drawer = (
     <div>
@@ -119,6 +123,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Divider />
           <List>
             {userMenuItems.map((item) => (
+              <ListItem key={item.text} disablePadding>
+                <ListItemButton
+                  component={RouterLink}
+                  to={item.path}
+                  selected={location.pathname === item.path}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </>
+      )}
+
+      {/* Пункты меню для организаторов и администраторов */}
+      {isAuthenticated && (isAdmin || isOrganizer) && (
+        <>
+          <Divider />
+          <List>
+            {organizerMenuItems.map((item) => (
               <ListItem key={item.text} disablePadding>
                 <ListItemButton
                   component={RouterLink}

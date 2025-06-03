@@ -10,8 +10,9 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Alert,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, BookOnline as BookIcon } from '@mui/icons-material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -20,7 +21,8 @@ import  ru  from 'date-fns/locale/ru';
 import DataTable from '../components/common/DataTable';
 import FormDialog from '../components/common/FormDialog';
 import { eventsApi, EventCreate } from '../services/api/events';
-import { Event } from '../services/types/api';
+import { venuesApi } from '../services/api/venues';
+import { Event, Venue } from '../services/types/api';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
@@ -55,6 +57,7 @@ const initialFormData: EventCreate = {
 
 const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -62,27 +65,31 @@ const Events = () => {
   const [formData, setFormData] = useState<EventCreate>(initialFormData);
 
   const { showSuccess, showError } = useNotification();
-  const { isAdmin, isOrganizer } = useAuth();
+  const { isAdmin, isOrganizer, isAuthenticated } = useAuth();
 
   // Может создавать/редактировать только админ или организатор
   const canModify = isAdmin || isOrganizer;
 
-  const loadEvents = async () => {
+  const loadData = async () => {
     try {
       setIsLoading(true);
-      const data = await eventsApi.getAll();
-      setEvents(data);
+      const [eventsData, venuesData] = await Promise.all([
+        eventsApi.getAll(),
+        venuesApi.getAll(),
+      ]);
+      setEvents(eventsData);
+      setVenues(venuesData);
       setError(null);
     } catch (err) {
-      setError('Не удалось загрузить список мероприятий');
-      showError('Ошибка при загрузке мероприятий');
+      setError('Не удалось загрузить данные');
+      showError('Ошибка при загрузке данных');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadEvents();
+    loadData();
   }, []);
 
   const handleSubmit = async () => {
@@ -95,7 +102,7 @@ const Events = () => {
         await eventsApi.create(formData);
         showSuccess('Мероприятие успешно создано');
       }
-      loadEvents();
+      loadData();
       handleCloseDialog();
     } catch (err) {
       showError(
@@ -114,7 +121,7 @@ const Events = () => {
         setIsLoading(true);
         await eventsApi.delete(event.event_id);
         showSuccess('Мероприятие успешно удалено');
-        loadEvents();
+        loadData();
       } catch (err) {
         showError('Ошибка при удалении мероприятия');
       } finally {
@@ -142,6 +149,32 @@ const Events = () => {
     setFormData(initialFormData);
   };
 
+  const handleBookEvent = (event: Event) => {
+    // Логика для регистрации на мероприятие
+    showSuccess(`Функция регистрации на мероприятие "${event.description}" будет добавлена позже`);
+  };
+
+  const renderActions = (event: Event) => {
+    const actions = [];
+
+    // Регистрация на мероприятие доступна всем авторизованным пользователям
+    if (isAuthenticated && event.status === 'анонс') {
+      actions.push(
+        <Button
+          key="book"
+          size="small"
+          variant="outlined"
+          startIcon={<BookIcon />}
+          onClick={() => handleBookEvent(event)}
+        >
+          Зарегистрироваться
+        </Button>
+      );
+    }
+
+    return actions;
+  };
+
   return (
     <Container>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -159,6 +192,12 @@ const Events = () => {
         )}
       </Box>
 
+      {!isAuthenticated && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Для регистрации на мероприятия необходимо авторизоваться
+        </Alert>
+      )}
+
       <DataTable
         columns={columns}
         data={events}
@@ -166,6 +205,7 @@ const Events = () => {
         error={error || undefined}
         onEdit={canModify ? handleEdit : undefined}
         onDelete={canModify ? handleDelete : undefined}
+        actions={renderActions}
         searchPlaceholder="Поиск по мероприятиям..."
       />
 
@@ -179,6 +219,22 @@ const Events = () => {
         >
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Stack spacing={2}>
+              <FormControl fullWidth>
+                <InputLabel>Площадка</InputLabel>
+                <Select
+                  value={formData.venue_id}
+                  label="Площадка"
+                  onChange={(e) =>
+                    setFormData({ ...formData, venue_id: Number(e.target.value) })
+                  }
+                >
+                  {venues.map((venue) => (
+                    <MenuItem key={venue.venue_id} value={venue.venue_id}>
+                      {venue.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <TextField
                 fullWidth
                 label="Описание"
@@ -228,6 +284,7 @@ const Events = () => {
                   })
                 }
                 required
+                inputProps={{ min: 1 }}
               />
               <FormControl fullWidth>
                 <InputLabel>Статус</InputLabel>

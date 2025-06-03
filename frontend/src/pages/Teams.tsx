@@ -190,7 +190,7 @@ const Teams = () => {
       >
         {selectedTeam && (
           <Stack spacing={2}>
-            {isCaptain(selectedTeam) && (
+            {isAuthenticated && isCaptain(selectedTeam) && (
               <>
                 <TextField
                   fullWidth
@@ -220,7 +220,7 @@ const Teams = () => {
                     key={member.user_id}
                     label={member.username}
                     onDelete={
-                      isCaptain(selectedTeam) ? () => handleRemoveMember(member.user_id) : undefined
+                      isAuthenticated && isCaptain(selectedTeam) ? () => handleRemoveMember(member.user_id) : undefined
                     }
                     color={member.user_id === selectedTeam.captain_id ? "primary" : "default"}
                   />

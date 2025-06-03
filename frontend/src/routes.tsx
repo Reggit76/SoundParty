@@ -21,12 +21,15 @@ import AdminUsers from './pages/admin/AdminUsers';
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Публичные маршруты */}
+      {/* Публичные маршруты (доступны всем) */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/events" element={<Events />} />
+      <Route path="/venues" element={<Venues />} />
+      <Route path="/teams" element={<Teams />} />
 
-      {/* Защищенные маршруты (доступны всем авторизованным пользователям) */}
+      {/* Защищенные маршруты (доступны только авторизованным пользователям) */}
       <Route
         path="/profile"
         element={
@@ -36,26 +39,10 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/teams"
-        element={
-          <ProtectedRoute>
-            <Teams />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/bookings"
         element={
           <ProtectedRoute>
             <Bookings />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/events"
-        element={
-          <ProtectedRoute>
-            <Events />
           </ProtectedRoute>
         }
       />
@@ -69,14 +56,6 @@ const AppRoutes = () => {
       />
 
       {/* Маршруты для организаторов и администраторов */}
-      <Route
-        path="/venues"
-        element={
-          <AdminRoute allowOrganizer>
-            <Venues />
-          </AdminRoute>
-        }
-      />
       <Route
         path="/event-results"
         element={

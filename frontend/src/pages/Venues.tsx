@@ -11,24 +11,14 @@ import {
   Grid,
   TextField,
   Stack,
+  Alert,
 } from '@mui/material';
 import { LocationOn, People, Add as AddIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { venuesApi, VenueCreate } from '../services/api/venues';
+import { Venue } from '../services/types/api';
 import FormDialog from '../components/common/FormDialog';
-
-interface Venue {
-  venue_id: number;
-  name: string;
-  address: string;
-  capacity: number;
-}
-
-interface VenueCreate {
-  name: string;
-  address: string;
-  capacity: number;
-}
 
 const Venues: React.FC = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -42,44 +32,41 @@ const Venues: React.FC = () => {
     capacity: 0,
   });
 
-  const { isAdmin, isOrganizer } = useAuth();
+  const { isAdmin, isOrganizer, isAuthenticated } = useAuth();
   const { showSuccess, showError } = useNotification();
 
   // Может создавать/редактировать только админ или организатор
   const canModify = isAdmin || isOrganizer;
 
-  useEffect(() => {
-    const fetchVenues = async () => {
-      try {
-        // Здесь должен быть вызов API
-        // const response = await venuesApi.getAll();
-        // setVenues(response);
-        
-        // Временная заглушка
-        setVenues([
-          { venue_id: 1, name: 'Main Hall', address: '123 Music Street', capacity: 500 },
-          { venue_id: 2, name: 'Small Stage', address: '456 Concert Ave', capacity: 100 }
-        ]);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load venues. Please try again later.');
-        setLoading(false);
-      }
-    };
+  const loadVenues = async () => {
+    try {
+      setLoading(true);
+      const response = await venuesApi.getAll();
+      setVenues(response);
+      setError(null);
+    } catch (err) {
+      setError('Не удалось загрузить площадки. Попробуйте позже.');
+      showError('Ошибка при загрузке площадок');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchVenues();
+  useEffect(() => {
+    loadVenues();
   }, []);
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
       if (editingVenue) {
-        // await venuesApi.update(editingVenue.venue_id, formData);
+        await venuesApi.update(editingVenue.venue_id, formData);
         showSuccess('Площадка успешно обновлена');
       } else {
-        // await venuesApi.create(formData);
+        await venuesApi.create(formData);
         showSuccess('Площадка успешно создана');
       }
+      loadVenues();
       handleCloseDialog();
     } catch (err) {
       showError(
@@ -102,6 +89,21 @@ const Venues: React.FC = () => {
     setIsDialogOpen(true);
   };
 
+  const handleDelete = async (venue: Venue) => {
+    if (window.confirm(`Вы уверены, что хотите удалить площадку "${venue.name}"?`)) {
+      try {
+        setLoading(true);
+        await venuesApi.delete(venue.venue_id);
+        showSuccess('Площадка успешно удалена');
+        loadVenues();
+      } catch (err) {
+        showError('Ошибка при удалении площадки');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingVenue(null);
@@ -118,9 +120,9 @@ const Venues: React.FC = () => {
 
   if (error) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <Typography color="error">{error}</Typography>
-      </Box>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
     );
   }
 
@@ -140,6 +142,12 @@ const Venues: React.FC = () => {
           </Button>
         )}
       </Box>
+
+      {!isAuthenticated && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Здесь вы можете посмотреть доступные площадки для проведения мероприятий
+        </Alert>
+      )}
 
       <Grid container spacing={4}>
         {venues.map((venue) => (
@@ -163,13 +171,15 @@ const Venues: React.FC = () => {
                 </Box>
               </CardContent>
               <CardActions>
-                <Button size="small" color="primary">
-                  Подробнее
-                </Button>
                 {canModify && (
-                  <Button size="small" color="primary" onClick={() => handleEdit(venue)}>
-                    Редактировать
-                  </Button>
+                  <>
+                    <Button size="small" color="primary" onClick={() => handleEdit(venue)}>
+                      Редактировать
+                    </Button>
+                    <Button size="small" color="error" onClick={() => handleDelete(venue)}>
+                      Удалить
+                    </Button>
+                  </>
                 )}
               </CardActions>
             </Card>

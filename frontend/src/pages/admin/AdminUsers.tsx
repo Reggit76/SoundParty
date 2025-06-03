@@ -58,8 +58,8 @@ const columns = [
       <Chip 
         label={value}
         color={
-          value === 'Администратор' ? 'error' : 
-          value === 'Организатор' ? 'warning' : 'default'
+          value === 'admin' ? 'error' : 
+          value === 'organizer' ? 'warning' : 'default'
         }
         size="small"
       />
@@ -142,6 +142,11 @@ const AdminUsers = () => {
   };
 
   const handleDelete = async (user: User) => {
+    if (user.role_id === 1) {
+      showError('Нельзя удалить администратора');
+      return;
+    }
+
     if (window.confirm(`Вы уверены, что хотите удалить пользователя "${user.fullname}"?`)) {
       try {
         setIsLoading(true);
@@ -179,6 +184,26 @@ const AdminUsers = () => {
     return role?.role_name || 'Неизвестная роль';
   };
 
+  // Фильтруем роли для формы (убираем admin для обычных пользователей)
+  const getAvailableRoles = () => {
+    if (editingUser && editingUser.role_id === 1) {
+      // Если редактируем админа, показываем все роли
+      return roles;
+    }
+    // Для остальных пользователей показываем только participant и organizer
+    return roles.filter((role) => role.role_id !== 1);
+  };
+
+  // Проверяем, можно ли редактировать пользователя
+  const canEdit = (user: User) => {
+    return true; // Админ может редактировать всех
+  };
+
+  // Проверяем, можно ли удалить пользователя
+  const canDelete = (user: User) => {
+    return user.role_id !== 1; // Нельзя удалить админа
+  };
+
   return (
     <Container>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -210,6 +235,8 @@ const AdminUsers = () => {
         error={error || undefined}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        canEdit={canEdit}
+        canDelete={canDelete}
         searchPlaceholder="Поиск пользователей..."
       />
 
@@ -262,18 +289,32 @@ const AdminUsers = () => {
                 setFormData({ ...formData, role_id: Number(e.target.value) })
               }
             >
-              {roles.map((role) => (
+              {getAvailableRoles().map((role) => (
                 <MenuItem key={role.role_id} value={role.role_id}>
                   <Box display="flex" alignItems="center" gap={1}>
                     {role.role_id === 1 && <AdminPanelSettings fontSize="small" />}
                     {role.role_id === 2 && <SupervisorAccount fontSize="small" />}
                     {role.role_id === 3 && <Person fontSize="small" />}
-                    {role.role_name}
+                    {role.role_name === 'admin' ? 'Администратор' : 
+                     role.role_name === 'organizer' ? 'Организатор' : 
+                     role.role_name === 'participant' ? 'Участник' : role.role_name}
                   </Box>
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
+          
+          {editingUser && editingUser.role_id === 1 && (
+            <Alert severity="warning">
+              Вы редактируете учетную запись администратора. Будьте осторожны при изменении роли.
+            </Alert>
+          )}
+          
+          {!editingUser && (
+            <Alert severity="info">
+              Новые пользователи могут быть созданы только с ролями "Участник" или "Организатор"
+            </Alert>
+          )}
         </Stack>
       </FormDialog>
     </Container>
