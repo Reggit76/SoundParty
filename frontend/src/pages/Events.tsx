@@ -22,6 +22,7 @@ import FormDialog from '../components/common/FormDialog';
 import { eventsApi, EventCreate } from '../services/api/events';
 import { Event } from '../services/types/api';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 
 const columns = [
@@ -61,6 +62,10 @@ const Events = () => {
   const [formData, setFormData] = useState<EventCreate>(initialFormData);
 
   const { showSuccess, showError } = useNotification();
+  const { isAdmin, isOrganizer } = useAuth();
+
+  // Может создавать/редактировать только админ или организатор
+  const canModify = isAdmin || isOrganizer;
 
   const loadEvents = async () => {
     try {
@@ -143,13 +148,15 @@ const Events = () => {
         <Typography variant="h4" component="h1">
           Мероприятия
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setIsDialogOpen(true)}
-        >
-          Добавить мероприятие
-        </Button>
+        {canModify && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setIsDialogOpen(true)}
+          >
+            Добавить мероприятие
+          </Button>
+        )}
       </Box>
 
       <DataTable
@@ -157,92 +164,94 @@ const Events = () => {
         data={events}
         isLoading={isLoading}
         error={error || undefined}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+        onEdit={canModify ? handleEdit : undefined}
+        onDelete={canModify ? handleDelete : undefined}
         searchPlaceholder="Поиск по мероприятиям..."
       />
 
-      <FormDialog
-        open={isDialogOpen}
-        onClose={handleCloseDialog}
-        onSubmit={handleSubmit}
-        title={editingEvent ? 'Редактировать мероприятие' : 'Создать мероприятие'}
-        isLoading={isLoading}
-      >
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <Stack spacing={2}>
-            <TextField
-              fullWidth
-              label="Описание"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              required
-              multiline
-              rows={3}
-            />
-            <DatePicker
-              label="Дата"
-              value={new Date(formData.date)}
-              onChange={(newValue: Date | null) => {
-                if (newValue) {
-                  setFormData({
-                    ...formData,
-                    date: format(newValue, 'yyyy-MM-dd'),
-                  });
+      {canModify && (
+        <FormDialog
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+          onSubmit={handleSubmit}
+          title={editingEvent ? 'Редактировать мероприятие' : 'Создать мероприятие'}
+          isLoading={isLoading}
+        >
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <Stack spacing={2}>
+              <TextField
+                fullWidth
+                label="Описание"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
                 }
-              }}
-              slotProps={{ textField: { fullWidth: true } }}
-            />
-            <TimePicker
-              label="Время"
-              value={new Date(`2000-01-01T${formData.time}`)}
-              onChange={(newValue: Date | null) => {
-                if (newValue) {
-                  setFormData({
-                    ...formData,
-                    time: format(newValue, 'HH:mm:ss'),
-                  });
-                }
-              }}
-              slotProps={{ textField: { fullWidth: true } }}
-            />
-            <TextField
-              fullWidth
-              type="number"
-              label="Максимальное количество команд"
-              value={formData.max_teams}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  max_teams: parseInt(e.target.value) || 0,
-                })
-              }
-              required
-            />
-            <FormControl fullWidth>
-              <InputLabel>Статус</InputLabel>
-              <Select
-                value={formData.status}
-                label="Статус"
+                required
+                multiline
+                rows={3}
+              />
+              <DatePicker
+                label="Дата"
+                value={new Date(formData.date)}
+                onChange={(newValue: Date | null) => {
+                  if (newValue) {
+                    setFormData({
+                      ...formData,
+                      date: format(newValue, 'yyyy-MM-dd'),
+                    });
+                  }
+                }}
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+              <TimePicker
+                label="Время"
+                value={new Date(`2000-01-01T${formData.time}`)}
+                onChange={(newValue: Date | null) => {
+                  if (newValue) {
+                    setFormData({
+                      ...formData,
+                      time: format(newValue, 'HH:mm:ss'),
+                    });
+                  }
+                }}
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+              <TextField
+                fullWidth
+                type="number"
+                label="Максимальное количество команд"
+                value={formData.max_teams}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    status: e.target.value as Event['status'],
+                    max_teams: parseInt(e.target.value) || 0,
                   })
                 }
-              >
-                <MenuItem value="анонс">Анонс</MenuItem>
-                <MenuItem value="в процессе">В процессе</MenuItem>
-                <MenuItem value="завершено">Завершено</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </LocalizationProvider>
-      </FormDialog>
+                required
+              />
+              <FormControl fullWidth>
+                <InputLabel>Статус</InputLabel>
+                <Select
+                  value={formData.status}
+                  label="Статус"
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      status: e.target.value as Event['status'],
+                    })
+                  }
+                >
+                  <MenuItem value="анонс">Анонс</MenuItem>
+                  <MenuItem value="в процессе">В процессе</MenuItem>
+                  <MenuItem value="завершено">Завершено</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+          </LocalizationProvider>
+        </FormDialog>
+      )}
     </Container>
   );
 };
 
-export default Events; 
+export default Events;

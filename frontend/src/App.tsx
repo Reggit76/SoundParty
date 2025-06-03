@@ -1,12 +1,35 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import Layout from './components/Layout';
 import theme from './theme';
 import AppRoutes from './routes';
+
+const AppContent = () => {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <Layout>
+      <AppRoutes />
+    </Layout>
+  );
+};
 
 function App() {
   return (
@@ -16,9 +39,7 @@ function App() {
         <Router>
           <AuthProvider>
             <NotificationProvider>
-              <Layout>
-                <AppRoutes />
-              </Layout>
+              <AppContent />
             </NotificationProvider>
           </AuthProvider>
         </Router>

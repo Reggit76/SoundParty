@@ -3,7 +3,6 @@ import psycopg2
 
 from app.core.security import decode_access_token, oauth2_scheme
 from app.database import get_db, put_db
-from app.repositories.user_repo import get_user_by_username
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
@@ -19,11 +18,37 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
     return {"username": username}
 
-def get_current_user_data(token: str = Depends(get_current_user)):
-    return token
+def get_current_user_data(current_user: dict = Depends(get_current_user)):
+    return current_user
 
-def get_current_admin(conn: psycopg2.extensions.connection = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    user = get_user_by_username(conn, current_user["username"])
-    if not user or user[0]["role_id"] != 1:
-        raise HTTPException(status_code=403, detail="Доступ запрещён")
-    return user[0]
+def get_current_admin(token: str = Depends(oauth2_scheme)):
+    from app.repositories.user_repo import get_user_by_username
+    
+    # Проверяем токен
+    current_user = get_current_user(token)
+    
+    # Получаем данные пользователя
+    conn = get_db()
+    try:
+        user = get_user_by_username(conn, current_user["username"])
+        if not user or user[0]["role_id"] != 1:
+            raise HTTPException(status_code=403, detail="Доступ запрещён: требуются права администратора")
+        return user[0]
+    finally:
+        put_db(conn)
+
+def get_current_organizer_or_admin(token: str = Depends(oauth2_scheme)):
+    from app.repositories.user_repo import get_user_by_username
+    
+    # Проверяем токен
+    current_user = get_current_user(token)
+    
+    # Получаем данные пользователя
+    conn = get_db()
+    try:
+        user = get_user_by_username(conn, current_user["username"])
+        if not user or user[0]["role_id"] not in [1, 2]:  # admin или organizer
+            raise HTTPException(status_code=403, detail="Доступ запрещён: требуются права организатора или администратора")
+        return user[0]
+    finally:
+        put_db(conn)

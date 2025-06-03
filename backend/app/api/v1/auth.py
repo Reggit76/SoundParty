@@ -5,6 +5,7 @@ import psycopg2
 from app.schemas.auth import Login, Register, Token
 from app.services.user_service import register_new_user, authenticate_user
 from app.core.security import hash_password, create_access_token
+from app.core.dependencies import get_current_user
 from app.config import settings
 from app.database import get_db, put_db
 
@@ -49,5 +50,19 @@ def login_for_access_token(login_data: Login):
             data={"sub": user["username"]}
         )
         return {"access_token": access_token, "token_type": "bearer"}
+    finally:
+        put_db(conn)
+
+@router.get("/me")
+def get_current_user_info(conn: psycopg2.extensions.connection = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    try:
+        from app.repositories.user_repo import get_user_by_username
+        user = get_user_by_username(conn, current_user["username"])
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_data = user[0]
+        # Убираем password_hash из ответа
+        del user_data["password_hash"]
+        return user_data
     finally:
         put_db(conn)

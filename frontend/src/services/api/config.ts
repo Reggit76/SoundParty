@@ -9,67 +9,19 @@ export const api = axios.create({
   },
 });
 
-// Перехватчик запросов - добавляем токен авторизации
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
-// Перехватчик ответов - обрабатываем ошибки авторизации
+// Убираем автоматическое перенаправление на логин
+// Пусть AuthContext сам обрабатывает 401 ошибки
 api.interceptors.response.use(
-  (response) => {
-    // Если ответ содержит массив данных напрямую, оборачиваем в объект
-    if (Array.isArray(response.data)) {
-      return {
-        ...response,
-        data: {
-          data: response.data,
-          success: true
-        }
-      };
-    }
-    
-    // Если ответ не содержит поле data, добавляем его
-    if (response.data && !response.data.hasOwnProperty('data')) {
-      return {
-        ...response,
-        data: {
-          data: response.data,
-          success: true
-        }
-      };
-    }
-    
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // Если получили 401 ошибку (Unauthorized)
-    if (error.response?.status === 401) {
-      // Удаляем токен из localStorage
-      localStorage.removeItem('token');
-      
-      // Удаляем заголовок авторизации
-      delete api.defaults.headers.common['Authorization'];
-      
-      // Перенаправляем на страницу входа (только если не на публичной странице)
-      const currentPath = window.location.pathname;
-      const publicPaths = ['/', '/login', '/register', '/events'];
-      
-      if (!publicPaths.includes(currentPath)) {
-        window.location.href = '/login';
-      }
-    }
-    
     return Promise.reject(error);
   }
 );
-
-export default api;

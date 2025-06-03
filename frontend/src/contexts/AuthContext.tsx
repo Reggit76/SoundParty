@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api/config';
 
+interface User {
+  user_id: number;
+  username: string;
+  fullname: string;
+  email: string;
+  role_id: number;
+}
+
 interface RegisterData {
   username: string;
   fullname: string;
@@ -16,25 +24,44 @@ interface LoginData {
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: any | null;
+  user: User | null;
+  isAdmin: boolean;
+  isOrganizer: boolean;
   login: (credentials: LoginData) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const isAdmin = user?.role_id === 1;
+  const isOrganizer = user?.role_id === 2;
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setIsAuthenticated(true);
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // Здесь можно добавить запрос данных пользователя
-    }
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        try {
+          const response = await api.get('/auth/me');
+          setUser(response.data);
+          setIsAuthenticated(true);
+        } catch (error) {
+          // Токен недействителен, удаляем его
+          localStorage.removeItem('token');
+          delete api.defaults.headers.common['Authorization'];
+        }
+      }
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
   const login = async (credentials: LoginData) => {
@@ -45,6 +72,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('token', access_token);
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
+      // Получаем данные пользователя
+      const userResponse = await api.get('/auth/me');
+      setUser(userResponse.data);
       setIsAuthenticated(true);
     } catch (error) {
       throw new Error('Authentication failed');
@@ -53,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (userData: RegisterData) => {
     try {
-      const response = await api.post('/auth/register', userData);
+      await api.post('/auth/register', userData);
       
       // После успешной регистрации автоматически логинимся
       await login({
@@ -73,7 +103,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      user, 
+      isAdmin, 
+      isOrganizer, 
+      login, 
+      register, 
+      logout, 
+      loading 
+    }}>
       {children}
     </AuthContext.Provider>
   );

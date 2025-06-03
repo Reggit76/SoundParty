@@ -13,6 +13,7 @@ import FormDialog from '../components/common/FormDialog';
 import { teamsApi } from '../services/api/teams';
 import { Team, TeamCreate } from '../services/types/api';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const columns = [
   { id: 'team_id', label: 'ID', minWidth: 50 },
@@ -32,6 +33,12 @@ const Teams = () => {
   });
 
   const { showSuccess, showError } = useNotification();
+  const { isAuthenticated, isAdmin, isOrganizer } = useAuth();
+
+  // Создавать команды могут все авторизованные пользователи
+  const canCreate = isAuthenticated;
+  // Редактировать могут только админы и организаторы
+  const canModify = isAdmin || isOrganizer;
 
   const loadTeams = async () => {
     try {
@@ -110,13 +117,15 @@ const Teams = () => {
         <Typography variant="h4" component="h1">
           Команды
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setIsDialogOpen(true)}
-        >
-          Добавить команду
-        </Button>
+        {canCreate && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setIsDialogOpen(true)}
+          >
+            Добавить команду
+          </Button>
+        )}
       </Box>
 
       <DataTable
@@ -124,39 +133,43 @@ const Teams = () => {
         data={teams}
         isLoading={isLoading}
         error={error || undefined}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+        onEdit={canModify ? handleEdit : undefined}
+        onDelete={canModify ? handleDelete : undefined}
         searchPlaceholder="Поиск по командам..."
       />
 
-      <FormDialog
-        open={isDialogOpen}
-        onClose={handleCloseDialog}
-        onSubmit={handleSubmit}
-        title={editingTeam ? 'Редактировать команду' : 'Создать команду'}
-        isLoading={isLoading}
-      >
-        <Stack spacing={2}>
-          <TextField
-            fullWidth
-            label="Название команды"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
-          <TextField
-            fullWidth
-            type="number"
-            label="Рейтинг"
-            value={formData.rating}
-            onChange={(e) =>
-              setFormData({ ...formData, rating: parseInt(e.target.value) || 0 })
-            }
-          />
-        </Stack>
-      </FormDialog>
+      {canCreate && (
+        <FormDialog
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+          onSubmit={handleSubmit}
+          title={editingTeam ? 'Редактировать команду' : 'Создать команду'}
+          isLoading={isLoading}
+        >
+          <Stack spacing={2}>
+            <TextField
+              fullWidth
+              label="Название команды"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+            {canModify && (
+              <TextField
+                fullWidth
+                type="number"
+                label="Рейтинг"
+                value={formData.rating}
+                onChange={(e) =>
+                  setFormData({ ...formData, rating: parseInt(e.target.value) || 0 })
+                }
+              />
+            )}
+          </Stack>
+        </FormDialog>
+      )}
     </Container>
   );
 };
 
-export default Teams; 
+export default Teams;
