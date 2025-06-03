@@ -24,7 +24,7 @@ import {
   Group,
   LocationOn,
 } from '@mui/icons-material';
-import api from '../services/api';
+import { api } from '../services/api/config';
 import Grid from '../components/CustomGrid';
 
 interface UserProfile {
@@ -80,8 +80,25 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await api.profile.get();
-        setProfile(response.data);
+        // Пока что показываем заглушку, так как endpoint профиля не реализован
+        setProfile({
+          id: 1,
+          name: 'John Doe',
+          email: 'john@example.com',
+          phone: '+1 234 567 8900',
+          avatar_url: '',
+          location: 'New York, NY',
+          bio: 'Music enthusiast and event organizer',
+          teams: [
+            { id: 1, name: 'Rock Band', role: 'Leader' },
+            { id: 2, name: 'Jazz Ensemble', role: 'Member' }
+          ],
+          upcoming_events: [
+            { id: 1, title: 'Rock Concert', date: '2024-12-20', venue: 'Madison Square Garden' },
+            { id: 2, title: 'Jazz Night', date: '2024-12-25', venue: 'Blue Note' }
+          ],
+          favorite_genres: ['Rock', 'Jazz', 'Blues']
+        });
         setLoading(false);
       } catch (err) {
         setError('Failed to load profile. Please try again later.');
@@ -234,4 +251,4 @@ const Profile: React.FC = () => {
   );
 };
 
-export default Profile; 
+export default Profile;

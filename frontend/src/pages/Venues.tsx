@@ -1,149 +1,180 @@
-import React, { useState, useEffect } from 'react';
+interface VenueCreate {
+  name: string;
+  address: string;
+  capacity: number;
+}import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
-  Card,
-  CardContent,
-  CardMedia,
-  CardActions,
   Button,
   Box,
-  CircularProgress,
-  Rating,
-  Chip,
+  TextField,
+  Stack,
 } from '@mui/material';
-import { LocationOn, People, MusicNote } from '@mui/icons-material';
-import api from '../services/api';
+import { Add as AddIcon } from '@mui/icons-material';
+import DataTable from '../components/common/DataTable';
+import FormDialog from '../components/common/FormDialog';
+import { venuesApi, VenueCreate } from '../services/api/venues';
+import { Venue } from '../services/types/api';
+import { useNotification } from '../contexts/NotificationContext';
 
-interface Venue {
-  id: number;
-  name: string;
-  description: string;
-  address: string;
-  capacity: number;
-  rating: number;
-  image_url: string;
-  amenities: string[];
-}
+const columns = [
+  { id: 'venue_id', label: 'ID', minWidth: 50 },
+  { id: 'name', label: 'Название', minWidth: 170 },
+  { id: 'address', label: 'Адрес', minWidth: 200 },
+  { id: 'capacity', label: 'Вместимость', minWidth: 100 },
+];
+
+const initialFormData: VenueCreate = {
+  name: '',
+  address: '',
+  capacity: 0,
+};
 
 const Venues: React.FC = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingVenue, setEditingVenue] = useState<Venue | null>(null);
+  const [formData, setFormData] = useState<VenueCreate>(initialFormData);
+
+  const { showSuccess, showError } = useNotification();
+
+  const loadVenues = async () => {
+    try {
+      setLoading(true);
+      const data = await venuesApi.getAll();
+      setVenues(data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load venues. Please try again later.');
+      showError('Ошибка при загрузке площадок');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchVenues = async () => {
-      try {
-        const response = await api.venues.getAll();
-        setVenues(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load venues. Please try again later.');
-        setLoading(false);
-      }
-    };
-
-    fetchVenues();
+    loadVenues();
   }, []);
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      if (editingVenue) {
+        await venuesApi.update(editingVenue.venue_id, formData);
+        showSuccess('Площадка успешно обновлена');
+      } else {
+        await venuesApi.create(formData);
+        showSuccess('Площадка успешно создана');
+      }
+      loadVenues();
+      handleCloseDialog();
+    } catch (err) {
+      showError(
+        editingVenue
+          ? 'Ошибка при обновлении площадки'
+          : 'Ошибка при создании площадки'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (error) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <Typography color="error">{error}</Typography>
-      </Box>
-    );
-  }
+  const handleDelete = async (venue: Venue) => {
+    if (window.confirm('Вы уверены, что хотите удалить эту площадку?')) {
+      try {
+        setLoading(true);
+        await venuesApi.delete(venue.venue_id);
+        showSuccess('Площадка успешно удалена');
+        loadVenues();
+      } catch (err) {
+        showError('Ошибка при удалении площадки');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleEdit = (venue: Venue) => {
+    setEditingVenue(venue);
+    setFormData({
+      name: venue.name,
+      address: venue.address,
+      capacity: venue.capacity,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingVenue(null);
+    setFormData(initialFormData);
+  };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Music Venues
-      </Typography>
-
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 4,
-        }}
-      >
-        {venues.map((venue) => (
-          <Box
-            key={venue.id}
-            sx={{
-              flex: {
-                xs: '0 0 100%',
-                sm: '0 0 calc(50% - 32px)',
-                md: '0 0 calc(33.333% - 32px)',
-              },
-            }}
-          >
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardMedia
-                component="img"
-                height="200"
-                image={venue.image_url}
-                alt={venue.name}
-              />
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Typography gutterBottom variant="h5" component="h2">
-                  {venue.name}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Rating value={venue.rating} readOnly precision={0.5} />
-                  <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                    ({venue.rating})
-                  </Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  {venue.description}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <LocationOn fontSize="small" color="action" />
-                  <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                    {venue.address}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <People fontSize="small" color="action" />
-                  <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                    Capacity: {venue.capacity}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {venue.amenities.map((amenity, index) => (
-                    <Chip
-                      key={index}
-                      icon={<MusicNote />}
-                      label={amenity}
-                      size="small"
-                      variant="outlined"
-                    />
-                  ))}
-                </Box>
-              </CardContent>
-              <CardActions>
-                <Button size="small" color="primary">
-                  View Details
-                </Button>
-                <Button size="small" color="primary">
-                  Book Venue
-                </Button>
-              </CardActions>
-            </Card>
-          </Box>
-        ))}
+    <Container>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" component="h1">
+          Площадки
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setIsDialogOpen(true)}
+        >
+          Добавить площадку
+        </Button>
       </Box>
+
+      <DataTable
+        columns={columns}
+        data={venues}
+        isLoading={loading}
+        error={error || undefined}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        searchPlaceholder="Поиск по площадкам..."
+      />
+
+      <FormDialog
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSubmit={handleSubmit}
+        title={editingVenue ? 'Редактировать площадку' : 'Создать площадку'}
+        isLoading={loading}
+      >
+        <Stack spacing={2}>
+          <TextField
+            fullWidth
+            label="Название"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+          <TextField
+            fullWidth
+            label="Адрес"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            required
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label="Вместимость"
+            value={formData.capacity}
+            onChange={(e) =>
+              setFormData({ ...formData, capacity: parseInt(e.target.value) || 0 })
+            }
+            required
+            inputProps={{ min: 1 }}
+          />
+        </Stack>
+      </FormDialog>
     </Container>
   );
 };
 
-export default Venues; 
+export default Venues;

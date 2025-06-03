@@ -2,9 +2,14 @@ version: '3.8'
 
 services:
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      args:
+        - NODE_ENV=production
     ports:
       - "3000:80"
+    environment:
+      - NODE_ENV=production
     depends_on:
       - backend
     networks:
@@ -17,10 +22,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/soundparty
       - SECRET_KEY=your-super-secret-key-for-jwt-tokens
-      - BACKEND_CORS_ORIGINS=["http://localhost:3000"]
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     networks:
       - app-network
 
@@ -32,16 +35,11 @@ services:
       - POSTGRES_DB=soundparty
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     networks:
       - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d soundparty"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
 networks:
   app-network:

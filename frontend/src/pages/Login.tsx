@@ -13,7 +13,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LoginFormData {
-  username: string; // Изменено с email на username
+  username: string;
   password: string;
 }
 
@@ -43,8 +43,8 @@ const Login: React.FC = () => {
     try {
       await login({ username: formData.username, password: formData.password });
       navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Неверное имя пользователя или пароль');
+    } catch (err) {
+      setError('Invalid username or password');
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ const Login: React.FC = () => {
       >
         <Paper sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
-            Вход в систему
+            Sign In
           </Typography>
 
           {error && (
@@ -77,7 +77,7 @@ const Login: React.FC = () => {
               required
               fullWidth
               id="username"
-              label="Имя пользователя"
+              label="Username"
               name="username"
               autoComplete="username"
               autoFocus
@@ -89,7 +89,7 @@ const Login: React.FC = () => {
               required
               fullWidth
               name="password"
-              label="Пароль"
+              label="Password"
               type="password"
               id="password"
               autoComplete="current-password"
@@ -103,15 +103,15 @@ const Login: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Вход...' : 'Войти'}
+              {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Typography variant="body2">
-              Нет аккаунта?{' '}
+              Don't have an account?{' '}
               <Link component={RouterLink} to="/register">
-                Зарегистрироваться
+                Sign Up
               </Link>
             </Typography>
           </Box>

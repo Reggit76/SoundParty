@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+// В Docker окружении используем относительный путь (nginx будет проксировать)
+// В разработке используем прямой адрес backend
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? '/api/v1'  // Для Docker - nginx проксирует
+  : 'http://localhost:8000/api/v1'; // Для разработки
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -26,4 +30,4 @@ api.interceptors.response.use(
     }
     return Promise.reject(error);
   }
-); 
+);

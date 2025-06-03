@@ -13,11 +13,11 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface RegisterFormData {
-  username: string;        // Изменено с 'name' на 'username'
-  fullname: string;        // Добавлено поле 'fullname'
+  username: string;
+  fullname: string;
   email: string;
   password: string;
-  confirmPassword: string; // Будем конвертировать в confirm_password
+  confirmPassword: string;
 }
 
 const Register: React.FC = () => {
@@ -53,7 +53,6 @@ const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      // Преобразуем данные для backend
       await register({
         username: formData.username,
         fullname: formData.fullname,
@@ -61,9 +60,12 @@ const Register: React.FC = () => {
         password: formData.password,
         confirm_password: formData.confirmPassword,
       });
-      navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      
+      // Показываем сообщение об успешной регистрации и перенаправляем на логин
+      alert('Registration successful! Please log in.');
+      navigate('/login');
+    } catch (err) {
+      setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,7 @@ const Register: React.FC = () => {
       >
         <Paper sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
-            Регистрация
+            Sign Up
           </Typography>
 
           {error && (
@@ -96,7 +98,7 @@ const Register: React.FC = () => {
               required
               fullWidth
               id="username"
-              label="Имя пользователя"
+              label="Username"
               name="username"
               autoComplete="username"
               autoFocus
@@ -108,7 +110,7 @@ const Register: React.FC = () => {
               required
               fullWidth
               id="fullname"
-              label="Полное имя"
+              label="Full Name"
               name="fullname"
               autoComplete="name"
               value={formData.fullname}
@@ -119,10 +121,9 @@ const Register: React.FC = () => {
               required
               fullWidth
               id="email"
-              label="Email"
+              label="Email Address"
               name="email"
               autoComplete="email"
-              type="email"
               value={formData.email}
               onChange={handleChange}
             />
@@ -131,7 +132,7 @@ const Register: React.FC = () => {
               required
               fullWidth
               name="password"
-              label="Пароль"
+              label="Password"
               type="password"
               id="password"
               autoComplete="new-password"
@@ -143,7 +144,7 @@ const Register: React.FC = () => {
               required
               fullWidth
               name="confirmPassword"
-              label="Подтвердите пароль"
+              label="Confirm Password"
               type="password"
               id="confirmPassword"
               autoComplete="new-password"
@@ -157,15 +158,15 @@ const Register: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+              {loading ? 'Signing up...' : 'Sign Up'}
             </Button>
           </form>
 
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Typography variant="body2">
-              Уже есть аккаунт?{' '}
+              Already have an account?{' '}
               <Link component={RouterLink} to="/login">
-                Войти
+                Sign In
               </Link>
             </Typography>
           </Box>
