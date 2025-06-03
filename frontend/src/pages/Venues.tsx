@@ -1,8 +1,4 @@
-interface VenueCreate {
-  name: string;
-  address: string;
-  capacity: number;
-}import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -31,9 +27,9 @@ const initialFormData: VenueCreate = {
   capacity: 0,
 };
 
-const Venues: React.FC = () => {
+const Venues = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVenue, setEditingVenue] = useState<Venue | null>(null);
@@ -43,15 +39,15 @@ const Venues: React.FC = () => {
 
   const loadVenues = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const data = await venuesApi.getAll();
       setVenues(data);
       setError(null);
     } catch (err) {
-      setError('Failed to load venues. Please try again later.');
+      setError('Не удалось загрузить список площадок');
       showError('Ошибка при загрузке площадок');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -61,7 +57,7 @@ const Venues: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       if (editingVenue) {
         await venuesApi.update(editingVenue.venue_id, formData);
         showSuccess('Площадка успешно обновлена');
@@ -78,21 +74,21 @@ const Venues: React.FC = () => {
           : 'Ошибка при создании площадки'
       );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleDelete = async (venue: Venue) => {
     if (window.confirm('Вы уверены, что хотите удалить эту площадку?')) {
       try {
-        setLoading(true);
+        setIsLoading(true);
         await venuesApi.delete(venue.venue_id);
         showSuccess('Площадка успешно удалена');
         loadVenues();
       } catch (err) {
         showError('Ошибка при удалении площадки');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
   };
@@ -131,7 +127,7 @@ const Venues: React.FC = () => {
       <DataTable
         columns={columns}
         data={venues}
-        isLoading={loading}
+        isLoading={isLoading}
         error={error || undefined}
         onEdit={handleEdit}
         onDelete={handleDelete}
@@ -143,12 +139,12 @@ const Venues: React.FC = () => {
         onClose={handleCloseDialog}
         onSubmit={handleSubmit}
         title={editingVenue ? 'Редактировать площадку' : 'Создать площадку'}
-        isLoading={loading}
+        isLoading={isLoading}
       >
         <Stack spacing={2}>
           <TextField
             fullWidth
-            label="Название"
+            label="Название площадки"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
@@ -158,7 +154,8 @@ const Venues: React.FC = () => {
             label="Адрес"
             value={formData.address}
             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            required
+            multiline
+            rows={2}
           />
           <TextField
             fullWidth

@@ -58,12 +58,8 @@ const Register: React.FC = () => {
         fullname: formData.fullname,
         email: formData.email,
         password: formData.password,
-        confirm_password: formData.confirmPassword,
       });
-      
-      // Показываем сообщение об успешной регистрации и перенаправляем на логин
-      alert('Registration successful! Please log in.');
-      navigate('/login');
+      navigate('/');
     } catch (err) {
       setError('Registration failed. Please try again.');
     } finally {

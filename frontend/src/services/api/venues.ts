@@ -9,23 +9,23 @@ export interface VenueCreate {
 
 export const venuesApi = {
   getAll: async (): Promise<Venue[]> => {
-    const response = await api.get<Venue[]>('/venues');
-    return response.data;
+    const response = await api.get<ApiResponse<Venue[]>>('/venues');
+    return response.data.data;
   },
 
   getById: async (id: number): Promise<Venue> => {
-    const response = await api.get<Venue>(`/venues/${id}`);
-    return response.data;
+    const response = await api.get<ApiResponse<Venue>>(`/venues/${id}`);
+    return response.data.data;
   },
 
   create: async (data: VenueCreate): Promise<Venue> => {
-    const response = await api.post<Venue>('/venues', data);
-    return response.data;
+    const response = await api.post<ApiResponse<Venue>>('/venues', data);
+    return response.data.data;
   },
 
   update: async (id: number, data: Partial<VenueCreate>): Promise<Venue> => {
-    const response = await api.put<Venue>(`/venues/${id}`, data);
-    return response.data;
+    const response = await api.put<ApiResponse<Venue>>(`/venues/${id}`, data);
+    return response.data.data;
   },
 
   delete: async (id: number): Promise<void> => {

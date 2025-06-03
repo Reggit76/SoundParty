@@ -6,7 +6,10 @@ class Login(BaseModel):
     username: str
     password: str
     confirm_password: Optional[str] = None
+    fullname: Optional[str] = None  # Добавляем поле для регистрации
+    email: Optional[str] = None     # Добавляем поле для регистрации
     role_id: int = 3
+
 
 # Схема для регистрации
 class Register(BaseModel):

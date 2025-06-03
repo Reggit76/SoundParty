@@ -53,6 +53,12 @@ export interface Venue {
   capacity: number;
 }
 
+export interface VenueCreate {
+  name: string;
+  address: string;
+  capacity: number;
+}
+
 // Booking types
 export interface Booking {
   booking_id: number;

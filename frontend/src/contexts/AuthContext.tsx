@@ -10,7 +10,6 @@ interface AuthContextType {
     fullname: string; 
     email: string; 
     password: string; 
-    confirm_password: string;
   }) => Promise<void>;
   logout: () => void;
 }
@@ -25,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = localStorage.getItem('token');
     if (token) {
       setIsAuthenticated(true);
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       // Здесь можно добавить запрос данных пользователя
     }
   }, []);
@@ -32,11 +32,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credentials: { username: string; password: string }) => {
     try {
       const response = await api.post('/auth/login', credentials);
-      const { access_token } = response.data;
+      const { access_token, user: userData } = response.data;
       
       localStorage.setItem('token', access_token);
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
+      setUser(userData);
       setIsAuthenticated(true);
     } catch (error) {
       throw new Error('Authentication failed');
@@ -48,13 +49,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fullname: string; 
     email: string; 
     password: string; 
-    confirm_password: string;
   }) => {
     try {
-      const response = await api.post('/auth/register', userData);
-      // После успешной регистрации можно автоматически авторизовать пользователя
-      // или перенаправить на страницу входа
-      return response.data;
+      const registrationData = {
+        username: userData.username,
+        fullname: userData.fullname,
+        email: userData.email,
+        password: userData.password,
+        confirm_password: userData.password, // Добавляем confirm_password
+      };
+      
+      const response = await api.post('/auth/register', registrationData);
+      
+      // После успешной регистрации можно сразу авторизоваться
+      await login({ username: userData.username, password: userData.password });
     } catch (error) {
       throw new Error('Registration failed');
     }
