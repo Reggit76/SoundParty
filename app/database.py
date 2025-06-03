@@ -7,6 +7,9 @@ from contextlib import contextmanager
 # Получаем параметры подключения из переменных окружения
 DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://soundparty:soundparty@localhost:5432/soundparty')
 
+# Глобальная переменная для пула соединений
+pool = None
+
 # Разбираем URL для получения параметров подключения
 def parse_db_url(url):
     # postgresql://user:password@host:port/dbname
@@ -28,16 +31,22 @@ def parse_db_url(url):
         'port': port
     }
 
-# Создаем пул соединений
-db_params = parse_db_url(DATABASE_URL)
-pool = SimpleConnectionPool(
-    minconn=1,
-    maxconn=10,
-    **db_params
-)
+def init_db_pool():
+    """Инициализация пула соединений с базой данных"""
+    global pool
+    if pool is None:
+        db_params = parse_db_url(DATABASE_URL)
+        pool = SimpleConnectionPool(
+            minconn=1,
+            maxconn=10,
+            **db_params
+        )
+    return pool
 
 def get_db():
     """Получить соединение из пула"""
+    if pool is None:
+        init_db_pool()
     conn = pool.getconn()
     try:
         return conn
@@ -47,7 +56,8 @@ def get_db():
 
 def put_db(conn):
     """Вернуть соединение в пул"""
-    pool.putconn(conn)
+    if pool is not None:
+        pool.putconn(conn)
 
 @contextmanager
 def get_db_connection():
@@ -57,3 +67,10 @@ def get_db_connection():
         yield conn
     finally:
         put_db(conn)
+
+def close_db_pool():
+    """Закрыть пул соединений"""
+    global pool
+    if pool is not None:
+        pool.closeall()
+        pool = None

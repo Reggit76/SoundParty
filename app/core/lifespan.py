@@ -15,7 +15,7 @@ async def lifespan(app: FastAPI):
     """
     logger.info("🚀 Запуск приложения")
     try:
-        from app.database import init_db_pool
+        from app.database import init_db_pool, close_db_pool
         init_db_pool()
         logger.info("✅ Пул соединений с БД инициализирован")
     except Exception as e:
@@ -26,9 +26,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("🛑 Остановка приложения")
     try:
-        from app.database import db_pool
-        if db_pool:
-            db_pool.closeall()
-            logger.info("🔌 Все соединения с БД закрыты")
+        close_db_pool()
+        logger.info("🔌 Все соединения с БД закрыты")
     except Exception as e:
         logger.error(f"❌ Ошибка при закрытии соединений: {str(e)}")

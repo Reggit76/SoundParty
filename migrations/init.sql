@@ -85,9 +85,12 @@ CREATE TABLE IF NOT EXISTS "EventResults" (
 CREATE TABLE IF NOT EXISTS "Payments" (
     payment_id SERIAL PRIMARY KEY,
     booking_id INTEGER REFERENCES "Bookings"(booking_id),
-    amount DECIMAL(10,2) NOT NULL,
-    payment_status VARCHAR(20) DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    payment_type VARCHAR(20) NOT NULL DEFAULT 'банковская карта',
+    total_amount DECIMAL(10,2) NOT NULL,
+    payment_status VARCHAR(20) DEFAULT 'не оплачено',
+    payment_date TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO "Roles" (name) VALUES
@@ -134,7 +137,7 @@ INSERT INTO "EventResults" (event_id, team_id, score) VALUES
     (1, 1, 85),
     (1, 2, 78);
 
-INSERT INTO "Payments" (booking_id, amount, payment_status) VALUES
-    (1, 1000.00, 'оплачено'),
-    (2, 800.00, 'pending'),
-    (3, 1200.00, 'оплачено');
+INSERT INTO "Payments" (booking_id, payment_type, total_amount, payment_status, payment_date) VALUES
+    (1, 'банковская карта', 1000.00, 'оплачено', CURRENT_TIMESTAMP),
+    (2, 'наличные', 800.00, 'не оплачено', NULL),
+    (3, 'перевод', 1200.00, 'оплачено', CURRENT_TIMESTAMP);
