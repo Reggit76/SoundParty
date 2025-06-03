@@ -12,36 +12,28 @@ import {
   Select,
   Alert,
 } from '@mui/material';
-import { Add as AddIcon, BookOnline as BookIcon } from '@mui/icons-material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import  ru  from 'date-fns/locale/ru';
+import { Add as AddIcon } from '@mui/icons-material';
 import DataTable from '../components/common/DataTable';
 import FormDialog from '../components/common/FormDialog';
-import { eventsApi, EventCreate } from '../services/api/events';
-import { venuesApi } from '../services/api/venues';
-import { Event, Venue } from '../services/types/api';
+import { Event } from '../services/types/api';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 
+interface EventCreate {
+  venue_id: number;
+  description: string;
+  date: string;
+  time: string;
+  max_teams: number;
+  status: 'анонс' | 'в процессе' | 'завершено';
+}
+
 const columns = [
   { id: 'event_id', label: 'ID', minWidth: 50 },
   { id: 'description', label: 'Описание', minWidth: 200 },
-  {
-    id: 'date',
-    label: 'Дата',
-    minWidth: 100,
-    format: (value: string) => format(new Date(value), 'dd.MM.yyyy'),
-  },
-  {
-    id: 'time',
-    label: 'Время',
-    minWidth: 100,
-    format: (value: string) => format(new Date(`2000-01-01T${value}`), 'HH:mm'),
-  },
+  { id: 'date', label: 'Дата', minWidth: 100 },
+  { id: 'time', label: 'Время', minWidth: 100 },
   { id: 'max_teams', label: 'Макс. команд', minWidth: 100 },
   { id: 'status', label: 'Статус', minWidth: 100 },
 ];
@@ -50,14 +42,14 @@ const initialFormData: EventCreate = {
   venue_id: 0,
   description: '',
   date: format(new Date(), 'yyyy-MM-dd'),
-  time: format(new Date(), 'HH:mm:ss'),
+  time: '19:00:00',
   max_teams: 10,
   status: 'анонс',
 };
 
 const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
-  const [venues, setVenues] = useState<Venue[]>([]);
+  const [venues, setVenues] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -65,44 +57,84 @@ const Events = () => {
   const [formData, setFormData] = useState<EventCreate>(initialFormData);
 
   const { showSuccess, showError } = useNotification();
-  const { isAdmin, isOrganizer, isAuthenticated } = useAuth();
+  const { isAdmin, isOrganizer } = useAuth();
 
   // Может создавать/редактировать только админ или организатор
   const canModify = isAdmin || isOrganizer;
 
-  const loadData = async () => {
+  const loadEvents = async () => {
     try {
       setIsLoading(true);
-      const [eventsData, venuesData] = await Promise.all([
-        eventsApi.getAll(),
-        venuesApi.getAll(),
-      ]);
-      setEvents(eventsData);
-      setVenues(venuesData);
       setError(null);
+      
+      // Заглушки данных для площадок
+      const mockVenues = [
+        { venue_id: 1, name: 'Main Concert Hall', address: '123 Music Street', capacity: 500 },
+        { venue_id: 2, name: 'Small Jazz Club', address: '456 Jazz Avenue', capacity: 100 },
+        { venue_id: 3, name: 'Outdoor Stage', address: 'Central Park', capacity: 1000 }
+      ];
+      
+      // Заглушки данных для мероприятий
+      const mockEvents: Event[] = [
+        {
+          event_id: 1,
+          venue_id: 1,
+          description: 'Большой музыкальный фестиваль',
+          date: '2024-07-15',
+          time: '19:00:00',
+          max_teams: 20,
+          status: 'анонс'
+        },
+        {
+          event_id: 2,
+          venue_id: 2,
+          description: 'Джазовый вечер',
+          date: '2024-07-20',
+          time: '20:30:00',
+          max_teams: 5,
+          status: 'в процессе'
+        }
+      ];
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setVenues(mockVenues);
+      setEvents(mockEvents);
     } catch (err) {
-      setError('Не удалось загрузить данные');
-      showError('Ошибка при загрузке данных');
+      setError('Не удалось загрузить список мероприятий');
+      showError('Ошибка при загрузке мероприятий');
+      setEvents([]);
+      setVenues([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    loadEvents();
   }, []);
 
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       if (editingEvent) {
-        await eventsApi.update(editingEvent.event_id, formData);
+        setEvents(prev => prev.map(event => 
+          event.event_id === editingEvent.event_id 
+            ? { ...event, ...formData }
+            : event
+        ));
         showSuccess('Мероприятие успешно обновлено');
       } else {
-        await eventsApi.create(formData);
+        const newEvent: Event = {
+          event_id: Date.now(),
+          ...formData
+        };
+        setEvents(prev => [...prev, newEvent]);
         showSuccess('Мероприятие успешно создано');
       }
-      loadData();
+      
       handleCloseDialog();
     } catch (err) {
       showError(
@@ -119,9 +151,9 @@ const Events = () => {
     if (window.confirm('Вы уверены, что хотите удалить это мероприятие?')) {
       try {
         setIsLoading(true);
-        await eventsApi.delete(event.event_id);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setEvents(prev => prev.filter(e => e.event_id !== event.event_id));
         showSuccess('Мероприятие успешно удалено');
-        loadData();
       } catch (err) {
         showError('Ошибка при удалении мероприятия');
       } finally {
@@ -146,33 +178,10 @@ const Events = () => {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingEvent(null);
-    setFormData(initialFormData);
-  };
-
-  const handleBookEvent = (event: Event) => {
-    // Логика для регистрации на мероприятие
-    showSuccess(`Функция регистрации на мероприятие "${event.description}" будет добавлена позже`);
-  };
-
-  const renderActions = (event: Event) => {
-    const actions = [];
-
-    // Регистрация на мероприятие доступна всем авторизованным пользователям
-    if (isAuthenticated && event.status === 'анонс') {
-      actions.push(
-        <Button
-          key="book"
-          size="small"
-          variant="outlined"
-          startIcon={<BookIcon />}
-          onClick={() => handleBookEvent(event)}
-        >
-          Зарегистрироваться
-        </Button>
-      );
-    }
-
-    return actions;
+    setFormData({
+      ...initialFormData,
+      venue_id: venues.length > 0 ? venues[0].venue_id : 0
+    });
   };
 
   return (
@@ -192,20 +201,19 @@ const Events = () => {
         )}
       </Box>
 
-      {!isAuthenticated && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Для регистрации на мероприятия необходимо авторизоваться
+      {!canModify && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Для создания и редактирования мероприятий необходимы права администратора или организатора.
         </Alert>
       )}
 
       <DataTable
         columns={columns}
-        data={events}
+        data={Array.isArray(events) ? events : []}
         isLoading={isLoading}
         error={error || undefined}
         onEdit={canModify ? handleEdit : undefined}
         onDelete={canModify ? handleDelete : undefined}
-        actions={renderActions}
         searchPlaceholder="Поиск по мероприятиям..."
       />
 
@@ -217,94 +225,88 @@ const Events = () => {
           title={editingEvent ? 'Редактировать мероприятие' : 'Создать мероприятие'}
           isLoading={isLoading}
         >
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <Stack spacing={2}>
-              <FormControl fullWidth>
-                <InputLabel>Площадка</InputLabel>
-                <Select
-                  value={formData.venue_id}
-                  label="Площадка"
-                  onChange={(e) =>
-                    setFormData({ ...formData, venue_id: Number(e.target.value) })
-                  }
-                >
-                  {venues.map((venue) => (
-                    <MenuItem key={venue.venue_id} value={venue.venue_id}>
-                      {venue.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                fullWidth
-                label="Описание"
-                value={formData.description}
+          <Stack spacing={2}>
+            <FormControl fullWidth>
+              <InputLabel>Площадка</InputLabel>
+              <Select
+                value={formData.venue_id}
+                label="Площадка"
                 onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                  setFormData({ ...formData, venue_id: Number(e.target.value) })
                 }
                 required
-                multiline
-                rows={3}
-              />
-              <DatePicker
-                label="Дата"
-                value={new Date(formData.date)}
-                onChange={(newValue: Date | null) => {
-                  if (newValue) {
-                    setFormData({
-                      ...formData,
-                      date: format(newValue, 'yyyy-MM-dd'),
-                    });
-                  }
-                }}
-                slotProps={{ textField: { fullWidth: true } }}
-              />
-              <TimePicker
-                label="Время"
-                value={new Date(`2000-01-01T${formData.time}`)}
-                onChange={(newValue: Date | null) => {
-                  if (newValue) {
-                    setFormData({
-                      ...formData,
-                      time: format(newValue, 'HH:mm:ss'),
-                    });
-                  }
-                }}
-                slotProps={{ textField: { fullWidth: true } }}
-              />
-              <TextField
-                fullWidth
-                type="number"
-                label="Максимальное количество команд"
-                value={formData.max_teams}
+              >
+                {venues.map((venue) => (
+                  <MenuItem key={venue.venue_id} value={venue.venue_id}>
+                    {venue.name} - {venue.address}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label="Описание"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              required
+              multiline
+              rows={3}
+            />
+            <TextField
+              fullWidth
+              type="date"
+              label="Дата"
+              value={formData.date}
+              onChange={(e) =>
+                setFormData({ ...formData, date: e.target.value })
+              }
+              required
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              fullWidth
+              type="time"
+              label="Время"
+              value={formData.time}
+              onChange={(e) =>
+                setFormData({ ...formData, time: e.target.value + ':00' })
+              }
+              required
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              fullWidth
+              type="number"
+              label="Максимальное количество команд"
+              value={formData.max_teams}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  max_teams: parseInt(e.target.value) || 0,
+                })
+              }
+              required
+            />
+            <FormControl fullWidth>
+              <InputLabel>Статус</InputLabel>
+              <Select
+                value={formData.status}
+                label="Статус"
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    max_teams: parseInt(e.target.value) || 0,
+                    status: e.target.value as Event['status'],
                   })
                 }
-                required
-                inputProps={{ min: 1 }}
-              />
-              <FormControl fullWidth>
-                <InputLabel>Статус</InputLabel>
-                <Select
-                  value={formData.status}
-                  label="Статус"
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      status: e.target.value as Event['status'],
-                    })
-                  }
-                >
-                  <MenuItem value="анонс">Анонс</MenuItem>
-                  <MenuItem value="в процессе">В процессе</MenuItem>
-                  <MenuItem value="завершено">Завершено</MenuItem>
-                </Select>
-              </FormControl>
-            </Stack>
-          </LocalizationProvider>
+              >
+                <MenuItem value="анонс">Анонс</MenuItem>
+                <MenuItem value="в процессе">В процессе</MenuItem>
+                <MenuItem value="завершено">Завершено</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
         </FormDialog>
       )}
     </Container>

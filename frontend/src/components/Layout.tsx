@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -27,11 +27,9 @@ import {
   Payment,
   EmojiEvents,
   AdminPanelSettings,
-  Settings,
   ExitToApp,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../services/api/config';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -41,24 +39,8 @@ const drawerWidth = 240;
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [userRole, setUserRole] = useState<number | null>(null);
   const location = useLocation();
-  const { isAuthenticated, logout, user } = useAuth();
-
-  // Получаем роль пользователя
-  useEffect(() => {
-    if (isAuthenticated) {
-      const fetchUserRole = async () => {
-        try {
-          const response = await api.get('/profile');
-          setUserRole(response.data.role_id);
-        } catch (error) {
-          console.error('Ошибка при получении данных пользователя:', error);
-        }
-      };
-      fetchUserRole();
-    }
-  }, [isAuthenticated]);
+  const { isAuthenticated, logout, user, isAdmin, isOrganizer } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -77,20 +59,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { text: 'Профиль', icon: <Person />, path: '/profile' },
     { text: 'Бронирования', icon: <BookOnline />, path: '/bookings' },
     { text: 'Платежи', icon: <Payment />, path: '/payments' },
+    { text: 'Результаты', icon: <EmojiEvents />, path: '/event-results' },
   ];
-
-  // Пункты меню для организаторов и администраторов
-  const organizerMenuItems = [
-    { text: 'Результаты мероприятий', icon: <EmojiEvents />, path: '/event-results' },
-  ];
-
-  // Пункты меню для администраторов
-  const adminMenuItems = [
-    { text: 'Управление пользователями', icon: <Settings />, path: '/admin/users' },
-  ];
-
-  const isAdmin = userRole === 1;
-  const isOrganizer = userRole === 2;
 
   const drawer = (
     <div>
@@ -138,55 +108,28 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </>
       )}
 
-      {/* Пункты меню для организаторов и администраторов */}
-      {isAuthenticated && (isAdmin || isOrganizer) && (
-        <>
-          <Divider />
-          <List>
-            {organizerMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton
-                  component={RouterLink}
-                  to={item.path}
-                  selected={location.pathname === item.path}
-                >
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </>
-      )}
-
-      {/* Админ панель */}
-      {isAuthenticated && isAdmin && (
+      {/* Информация о пользователе */}
+      {isAuthenticated && user && (
         <>
           <Divider />
           <List>
             <ListItem>
               <ListItemText 
-                primary="Администрирование" 
+                primary={user.fullname}
+                secondary={
+                  isAdmin ? 'Администратор' : 
+                  isOrganizer ? 'Организатор' : 
+                  'Участник'
+                }
                 primaryTypographyProps={{ 
-                  variant: 'subtitle2', 
-                  color: 'primary',
-                  fontWeight: 'bold' 
-                }} 
+                  variant: 'body2',
+                  fontWeight: 'bold'
+                }}
+                secondaryTypographyProps={{
+                  color: isAdmin ? 'error.main' : isOrganizer ? 'warning.main' : 'primary.main'
+                }}
               />
             </ListItem>
-            {adminMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton
-                  component={RouterLink}
-                  to={item.path}
-                  selected={location.pathname === item.path}
-                  sx={{ pl: 4 }}
-                >
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
-            ))}
           </List>
         </>
       )}
@@ -211,7 +154,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             Sound Party
           </Typography>
 
-          {/* Индикатор роли админа */}
+          {/* Индикатор роли */}
           {isAuthenticated && isAdmin && (
             <Badge 
               badgeContent="ADMIN" 
@@ -254,7 +197,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Лучшая производительность на мобильных устройствах
+            keepMounted: true,
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },

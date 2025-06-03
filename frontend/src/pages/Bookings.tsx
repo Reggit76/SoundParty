@@ -10,20 +10,25 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Alert,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import DataTable from '../components/common/DataTable';
 import FormDialog from '../components/common/FormDialog';
-import { bookingsApi, BookingCreate } from '../services/api/bookings';
-import { eventsApi } from '../services/api/events';
-import { teamsApi } from '../services/api/teams';
 import { Booking, Event, Team } from '../services/types/api';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
+
+interface BookingCreate {
+  event_id: number;
+  team_id: number;
+  number_of_seats: number;
+}
 
 const columns = [
   { id: 'booking_id', label: 'ID', minWidth: 50 },
-  { id: 'event_id', label: 'Мероприятие', minWidth: 170 },
-  { id: 'team_id', label: 'Команда', minWidth: 170 },
+  { id: 'event_name', label: 'Мероприятие', minWidth: 170 },
+  { id: 'team_name', label: 'Команда', minWidth: 170 },
   { id: 'number_of_seats', label: 'Количество мест', minWidth: 100 },
 ];
 
@@ -44,22 +49,80 @@ const Bookings = () => {
   const [formData, setFormData] = useState<BookingCreate>(initialFormData);
 
   const { showSuccess, showError } = useNotification();
+  const { isAuthenticated } = useAuth();
 
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [bookingsData, eventsData, teamsData] = await Promise.all([
-        bookingsApi.getAll(),
-        eventsApi.getAll(),
-        teamsApi.getAll(),
-      ]);
-      setBookings(bookingsData);
-      setEvents(eventsData);
-      setTeams(teamsData);
       setError(null);
+      
+      // Заглушки данных
+      const mockEvents: Event[] = [
+        {
+          event_id: 1,
+          venue_id: 1,
+          description: 'Большой музыкальный фестиваль',
+          date: '2024-07-15',
+          time: '19:00:00',
+          max_teams: 20,
+          status: 'анонс'
+        },
+        {
+          event_id: 2,
+          venue_id: 2,
+          description: 'Джазовый вечер',
+          date: '2024-07-20',
+          time: '20:30:00',
+          max_teams: 5,
+          status: 'в процессе'
+        }
+      ];
+
+      const mockTeams: Team[] = [
+        {
+          team_id: 1,
+          name: 'Рок-звезды',
+          rating: 150,
+          captain_id: 1,
+          members: [],
+          members_count: 4
+        },
+        {
+          team_id: 2,
+          name: 'Джазовые котики',
+          rating: 120,
+          captain_id: 2,
+          members: [],
+          members_count: 3
+        }
+      ];
+
+      const mockBookings: Booking[] = [
+        {
+          booking_id: 1,
+          event_id: 1,
+          team_id: 1,
+          number_of_seats: 4
+        },
+        {
+          booking_id: 2,
+          event_id: 2,
+          team_id: 2,
+          number_of_seats: 3
+        }
+      ];
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setEvents(mockEvents);
+      setTeams(mockTeams);
+      setBookings(mockBookings);
     } catch (err) {
       setError('Не удалось загрузить данные');
       showError('Ошибка при загрузке данных');
+      setBookings([]);
+      setEvents([]);
+      setTeams([]);
     } finally {
       setIsLoading(false);
     }
@@ -72,14 +135,25 @@ const Bookings = () => {
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       if (editingBooking) {
-        await bookingsApi.update(editingBooking.booking_id, formData);
+        setBookings(prev => prev.map(booking => 
+          booking.booking_id === editingBooking.booking_id 
+            ? { ...booking, ...formData }
+            : booking
+        ));
         showSuccess('Бронирование успешно обновлено');
       } else {
-        await bookingsApi.create(formData);
+        const newBooking: Booking = {
+          booking_id: Date.now(),
+          ...formData
+        };
+        setBookings(prev => [...prev, newBooking]);
         showSuccess('Бронирование успешно создано');
       }
-      loadData();
+      
       handleCloseDialog();
     } catch (err) {
       showError(
@@ -96,9 +170,9 @@ const Bookings = () => {
     if (window.confirm('Вы уверены, что хотите удалить это бронирование?')) {
       try {
         setIsLoading(true);
-        await bookingsApi.delete(booking.booking_id);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setBookings(prev => prev.filter(b => b.booking_id !== booking.booking_id));
         showSuccess('Бронирование успешно удалено');
-        loadData();
       } catch (err) {
         showError('Ошибка при удалении бронирования');
       } finally {
@@ -133,11 +207,12 @@ const Bookings = () => {
     return team ? team.name : 'Неизвестная команда';
   };
 
-  const enrichedBookings = bookings.map((booking) => ({
+  // Обогащаем данные бронирований
+  const enrichedBookings = Array.isArray(bookings) ? bookings.map((booking) => ({
     ...booking,
-    event_id: getEventDescription(booking.event_id),
-    team_id: getTeamName(booking.team_id),
-  }));
+    event_name: getEventDescription(booking.event_id),
+    team_name: getTeamName(booking.team_id),
+  })) : [];
 
   return (
     <Container>
@@ -145,22 +220,30 @@ const Bookings = () => {
         <Typography variant="h4" component="h1">
           Бронирования
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setIsDialogOpen(true)}
-        >
-          Добавить бронирование
-        </Button>
+        {isAuthenticated && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setIsDialogOpen(true)}
+          >
+            Добавить бронирование
+          </Button>
+        )}
       </Box>
+
+      {!isAuthenticated && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Для создания бронирований необходимо войти в систему.
+        </Alert>
+      )}
 
       <DataTable
         columns={columns}
         data={enrichedBookings}
         isLoading={isLoading}
         error={error || undefined}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+        onEdit={isAuthenticated ? handleEdit : undefined}
+        onDelete={isAuthenticated ? handleDelete : undefined}
         searchPlaceholder="Поиск по бронированиям..."
       />
 
@@ -224,4 +307,4 @@ const Bookings = () => {
   );
 };
 
-export default Bookings; 
+export default Bookings;
