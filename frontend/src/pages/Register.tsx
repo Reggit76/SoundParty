@@ -22,7 +22,7 @@ interface RegisterFormData {
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, loading } = useAuth();
   const [formData, setFormData] = useState<RegisterFormData>({
     username: '',
     fullname: '',
@@ -31,7 +31,6 @@ const Register: React.FC = () => {
     confirmPassword: '',
   });
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,16 +45,9 @@ const Register: React.FC = () => {
     setError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Пароли не совпадают');
+      setError('Passwords do not match');
       return;
     }
-
-    if (formData.password.length < 6) {
-      setError('Пароль должен содержать минимум 6 символов');
-      return;
-    }
-
-    setLoading(true);
 
     try {
       await register({
@@ -67,9 +59,7 @@ const Register: React.FC = () => {
       });
       navigate('/');
     } catch (err) {
-      setError('Ошибка регистрации. Попробуйте снова.');
-    } finally {
-      setLoading(false);
+      setError('Registration failed. Please try again.');
     }
   };
 
@@ -123,10 +113,9 @@ const Register: React.FC = () => {
               required
               fullWidth
               id="email"
-              label="Email адрес"
+              label="Email"
               name="email"
               autoComplete="email"
-              type="email"
               value={formData.email}
               onChange={handleChange}
             />

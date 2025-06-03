@@ -19,13 +19,12 @@ interface LoginFormData {
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     username: '',
     password: '',
   });
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,15 +37,12 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
     try {
       await login({ username: formData.username, password: formData.password });
       navigate('/');
     } catch (err) {
-      setError('Неверное имя пользователя или пароль');
-    } finally {
-      setLoading(false);
+      setError('Invalid username or password');
     }
   };
 
