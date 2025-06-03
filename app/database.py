@@ -1,30 +1,59 @@
 # app/database.py
-import psycopg2
-from psycopg2 import pool
-from dotenv import load_dotenv
 import os
+import psycopg2
+from psycopg2.pool import SimpleConnectionPool
+from contextlib import contextmanager
 
-load_dotenv()
+# Получаем параметры подключения из переменных окружения
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://soundparty:soundparty@localhost:5432/soundparty')
 
-db_pool = None  # Глобальная переменная, инициализируемая в lifespan.py
+# Разбираем URL для получения параметров подключения
+def parse_db_url(url):
+    # postgresql://user:password@host:port/dbname
+    parts = url.split('://', 1)[1]
+    auth, rest = parts.split('@', 1)
+    user, password = auth.split(':', 1)
+    host_port, dbname = rest.split('/', 1)
+    if ':' in host_port:
+        host, port = host_port.split(':', 1)
+        port = int(port)
+    else:
+        host = host_port
+        port = 5432
+    return {
+        'dbname': dbname,
+        'user': user,
+        'password': password,
+        'host': host,
+        'port': port
+    }
 
-def init_db_pool():
-    global db_pool
-    if db_pool is None:
-        db_pool = psycopg2.pool.SimpleConnectionPool(
-            minconn=1,
-            maxconn=10,
-            dsn=os.getenv("DATABASE_URL")
-        )
-        print("✅ База данных: пул соединений инициализирован")
+# Создаем пул соединений
+db_params = parse_db_url(DATABASE_URL)
+pool = SimpleConnectionPool(
+    minconn=1,
+    maxconn=10,
+    **db_params
+)
 
 def get_db():
-    global db_pool
-    if db_pool is None:
-        raise Exception("Database pool not initialized")
-    return db_pool.getconn()
+    """Получить соединение из пула"""
+    conn = pool.getconn()
+    try:
+        return conn
+    except:
+        pool.putconn(conn)
+        raise
 
 def put_db(conn):
-    global db_pool
-    if conn and db_pool:
-        db_pool.putconn(conn)
+    """Вернуть соединение в пул"""
+    pool.putconn(conn)
+
+@contextmanager
+def get_db_connection():
+    """Контекстный менеджер для работы с соединением"""
+    conn = get_db()
+    try:
+        yield conn
+    finally:
+        put_db(conn)

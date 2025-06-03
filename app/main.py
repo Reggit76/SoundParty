@@ -8,7 +8,7 @@ import secrets
 
 # Локальные импорты
 from app.core.lifespan import lifespan
-from app.core.csrf import init_csrf
+from app.core.csrf import csrf_protect
 from app.config import settings
 
 # API роутеры
@@ -46,9 +46,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Инициализация CSRF защиты
-init_csrf(settings.SECRET_KEY)
-
+# CSRF защита уже инициализирована в модуле csrf.py
 # Статика и шаблоны
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

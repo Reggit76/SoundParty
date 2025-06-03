@@ -216,7 +216,7 @@ async def register_team_for_event(
         # Проверка, что команда не зарегистрирована
         existing_booking = get_booking_by_event_and_team(conn, event_id, team_id)
         if existing_booking:
-            return RedirectResponse(f"/event/{event_id}?error=already_registered", status_code=302)
+            return RedirectResponse(f"/events/{event_id}?error=already_registered", status_code=302)
         
         # Создание заявки
         booking_data = {
@@ -227,8 +227,9 @@ async def register_team_for_event(
         
         create_booking(conn, booking_data)
         
-        return RedirectResponse(f"/event/{event_id}?success=registered", status_code=302)
+        # Перенаправляем на страницу бронирований мероприятия
+        return RedirectResponse(f"/admin/events/{event_id}/bookings?success=registered", status_code=302)
     except Exception as e:
-        return RedirectResponse(f"/event/{event_id}?error=registration_failed", status_code=302)
+        return RedirectResponse(f"/events/{event_id}?error=registration_failed", status_code=302)
     finally:
         put_db(conn)

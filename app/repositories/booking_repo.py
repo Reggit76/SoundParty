@@ -12,7 +12,9 @@ def create_booking(conn, booking_data):
 
 def get_all_bookings(conn):
     query = """
-    SELECT b.booking_id, e.description AS event_name, t.name AS team_name, b.number_of_seats
+    SELECT b.booking_id, b.event_id, b.team_id, 
+           e.description AS event_name, t.name AS team_name, 
+           b.number_of_seats
     FROM "Bookings" b
     JOIN "Events" e ON b.event_id = e.event_id
     JOIN "Teams" t ON b.team_id = t.team_id
@@ -21,7 +23,9 @@ def get_all_bookings(conn):
 
 def get_booking_by_id(conn, booking_id):
     query = """
-    SELECT b.booking_id, e.description AS event_name, t.name AS team_name, b.number_of_seats
+    SELECT b.booking_id, b.event_id, b.team_id, 
+           e.description AS event_name, t.name AS team_name, 
+           b.number_of_seats
     FROM "Bookings" b
     JOIN "Events" e ON b.event_id = e.event_id
     JOIN "Teams" t ON b.team_id = t.team_id
@@ -42,8 +46,12 @@ def get_booking_by_event_and_team(conn, event_id, team_id):
     Проверить, зарегистрирована ли команда на мероприятие
     """
     query = """
-    SELECT booking_id, event_id, team_id, number_of_seats
-    FROM "Bookings"
-    WHERE event_id = %(event_id)s AND team_id = %(team_id)s
+    SELECT b.booking_id, b.event_id, b.team_id, 
+           e.description AS event_name, t.name AS team_name, 
+           b.number_of_seats
+    FROM "Bookings" b
+    JOIN "Events" e ON b.event_id = e.event_id
+    JOIN "Teams" t ON b.team_id = t.team_id
+    WHERE b.event_id = %(event_id)s AND b.team_id = %(team_id)s
     """
     return execute_query(conn, query, {"event_id": event_id, "team_id": team_id})

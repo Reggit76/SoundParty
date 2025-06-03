@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 import secrets
 import time
 from typing import Optional
+from app.config import settings
 
 class CSRFProtect:
     def __init__(self, secret_key: str, token_lifetime: int = 3600):
@@ -12,6 +13,12 @@ class CSRFProtect:
     
     def generate_csrf_token(self, session_id: str) -> str:
         """Генерирует CSRF токен для сессии"""
+        # Проверяем, есть ли уже токен для этой сессии
+        for token, data in self.tokens.items():
+            if data["session_id"] == session_id and time.time() - data["timestamp"] < self.token_lifetime:
+                return token
+                
+        # Если нет валидного токена, создаем новый
         token = secrets.token_urlsafe(32)
         self.tokens[token] = {
             "session_id": session_id,
@@ -37,8 +44,8 @@ class CSRFProtect:
             del self.tokens[token]
             return False
         
-        # Удаляем использованный токен
-        del self.tokens[token]
+        # Обновляем timestamp токена
+        token_data["timestamp"] = time.time()
         return True
     
     def _cleanup_old_tokens(self):
@@ -52,11 +59,7 @@ class CSRFProtect:
             del self.tokens[token]
 
 # Создаем экземпляр для использования
-csrf_protect = None
-
-def init_csrf(secret_key: str):
-    global csrf_protect
-    csrf_protect = CSRFProtect(secret_key)
+csrf_protect = CSRFProtect(secret_key=settings.SECRET_KEY)
 
 def get_csrf_token(request: Request) -> str:
     """Получает или создает CSRF токен для запроса"""

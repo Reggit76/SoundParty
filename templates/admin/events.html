@@ -45,10 +45,13 @@
           </td>
           <td>
             <div class="btn-group btn-group-sm">
-              <a href="/admin/events/{{ event.event_id }}/edit" class="btn btn-primary">
+              <a href="/admin/events/{{ event.event_id }}/bookings" class="btn btn-info" title="Бронирования">
+                <i class="fas fa-ticket-alt"></i>
+              </a>
+              <a href="/admin/events/{{ event.event_id }}/edit" class="btn btn-primary" title="Редактировать">
                 <i class="fas fa-edit"></i>
               </a>
-              <button type="button" class="btn btn-danger" onclick="confirmDelete({{ event.event_id }})">
+              <button type="button" class="btn btn-danger" onclick="confirmDelete({{ event.event_id }})" title="Удалить">
                 <i class="fas fa-trash"></i>
               </button>
             </div>

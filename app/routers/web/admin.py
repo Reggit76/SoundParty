@@ -13,7 +13,7 @@ from app.repositories.venue_repo import get_all_venues, create_venue, delete_ven
 from app.repositories.team_repo import get_all_teams, delete_team, get_team_by_id, update_team, create_team
 from app.repositories.booking_repo import get_all_bookings, delete_booking, get_booking_by_id
 from app.repositories.payment_repo import get_all_payments, update_payment_status, get_payment_by_id
-from app.repositories.participant_repo import get_all_participants
+from app.repositories.participant_repo import get_all_participants, get_participants_by_team_id
 from app.repositories.event_result_repo import create_event_result, get_event_results
 from app.database import get_db, put_db
 from app.services.user_service import get_user_by_id_service
@@ -855,5 +855,45 @@ def delete_entity(
             return RedirectResponse("/admin/bookings?deleted=1", status_code=302)
         
         return RedirectResponse("/admin", status_code=302)
+    finally:
+        put_db(conn)
+
+# === УПРАВЛЕНИЕ БРОНИРОВАНИЯМИ МЕРОПРИЯТИЯ ===
+
+@router.get("/events/{event_id}/bookings", response_class=HTMLResponse)
+async def admin_event_bookings(
+    event_id: int,
+    request: Request,
+    conn: psycopg2.extensions.connection = Depends(get_db)
+):
+    try:
+        current_user = check_admin_access(request, conn)
+        if not current_user:
+            return RedirectResponse("/login", status_code=302)
+        
+        # Получаем информацию о мероприятии
+        event = get_event_by_id(conn, event_id)
+        if not event:
+            raise HTTPException(status_code=404, detail="Мероприятие не найдено")
+        
+        # Получаем все бронирования для этого мероприятия
+        all_bookings = get_all_bookings(conn)
+        event_bookings = [b for b in all_bookings if b["event_id"] == event_id]
+        
+        # Получаем количество участников для каждой команды
+        for booking in event_bookings:
+            participants = get_participants_by_team_id(conn, booking["team_id"])
+            booking["participant_count"] = len(participants)
+            booking["participants"] = participants
+        
+        csrf_token = get_csrf_token(request)
+        
+        return templates.TemplateResponse("admin/event_bookings.html", {
+            "request": request,
+            "current_user": current_user,
+            "event": event[0],
+            "bookings": event_bookings,
+            "csrf_token": csrf_token
+        })
     finally:
         put_db(conn)

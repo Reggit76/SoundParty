@@ -1,11 +1,12 @@
 {% extends "base/base.html" %}
-{% block title %}Бронирования — Sound Party{% endblock %}
+{% block title %}Бронирования мероприятия — Sound Party{% endblock %}
 
 {% block breadcrumbs %}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="/">Главная</a></li>
     <li class="breadcrumb-item"><a href="/admin">Админ-панель</a></li>
+    <li class="breadcrumb-item"><a href="/admin/events">Мероприятия</a></li>
     <li class="breadcrumb-item active" aria-current="page">Бронирования</li>
   </ol>
 </nav>
@@ -13,8 +14,29 @@
 
 {% block content %}
 <div class="container">
+  {% if request.query_params.get('success') == 'registered' %}
+  <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+    <i class="fas fa-check-circle"></i> Команда успешно зарегистрирована на мероприятие!
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endif %}
+
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Управление бронированиями</h1>
+    <div>
+      <h1 class="h3 mb-2">Бронирования мероприятия</h1>
+      <p class="text-muted mb-0">{{ event.description }}</p>
+    </div>
+    <div class="text-end">
+      <p class="mb-1">
+        <i class="fas fa-calendar"></i> {{ event.date }}
+        <i class="fas fa-clock ms-3"></i> {{ event.time }}
+      </p>
+      <p class="mb-0">
+        <span class="badge bg-info">
+          <i class="fas fa-users"></i> {{ bookings|length }} / {{ event.max_teams }} команд
+        </span>
+      </p>
+    </div>
   </div>
 
   {% if bookings %}
@@ -23,9 +45,9 @@
       <thead>
         <tr>
           <th>ID</th>
-          <th>Мероприятие</th>
           <th>Команда</th>
-          <th>Кол-во мест</th>
+          <th class="text-center">Участников</th>
+          <th class="text-center">Кол-во мест</th>
           <th>Действия</th>
         </tr>
       </thead>
@@ -33,15 +55,19 @@
         {% for booking in bookings %}
         <tr>
           <td>{{ booking.booking_id }}</td>
-          <td>{{ booking.event_name }}</td>
           <td>{{ booking.team_name }}</td>
-          <td>{{ booking.number_of_seats }}</td>
+          <td class="text-center">
+            <span class="badge bg-secondary">
+              {{ booking.participant_count }}
+            </span>
+          </td>
+          <td class="text-center">{{ booking.number_of_seats }}</td>
           <td>
             <div class="btn-group btn-group-sm">
-              <button type="button" class="btn btn-primary" data-booking-id="{{ booking.booking_id }}" onclick="showDetails(this)">
+              <button type="button" class="btn btn-primary" data-booking-id="{{ booking.booking_id }}" onclick="showDetails(this)" title="Подробнее">
                 <i class="fas fa-info-circle"></i>
               </button>
-              <button type="button" class="btn btn-danger" data-booking-id="{{ booking.booking_id }}" onclick="confirmDelete(this)">
+              <button type="button" class="btn btn-danger" data-booking-id="{{ booking.booking_id }}" onclick="confirmDelete(this)" title="Удалить">
                 <i class="fas fa-trash"></i>
               </button>
             </div>
@@ -53,14 +79,14 @@
   </div>
   {% else %}
   <div class="alert alert-info">
-    <i class="fas fa-info-circle"></i> Бронирования отсутствуют
+    <i class="fas fa-info-circle"></i> На это мероприятие пока нет бронирований
   </div>
   {% endif %}
 </div>
 
 <!-- Booking Details Modal -->
 <div class="modal fade" id="detailsModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Детали бронирования</h5>
@@ -112,16 +138,40 @@ async function showDetails(button) {
     
     if (response.ok) {
       detailsContainer.innerHTML = `
-        <dl class="row">
-          <dt class="col-sm-4">Мероприятие:</dt>
-          <dd class="col-sm-8">${data.event_name}</dd>
-          
-          <dt class="col-sm-4">Команда:</dt>
-          <dd class="col-sm-8">${data.team_name}</dd>
-          
-          <dt class="col-sm-4">Количество мест:</dt>
-          <dd class="col-sm-8">${data.number_of_seats}</dd>
-        </dl>
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="mb-3">Основная информация</h6>
+            <dl class="row">
+              <dt class="col-sm-4">Мероприятие:</dt>
+              <dd class="col-sm-8">${data.event_name}</dd>
+              
+              <dt class="col-sm-4">Команда:</dt>
+              <dd class="col-sm-8">${data.team_name}</dd>
+              
+              <dt class="col-sm-4">Количество мест:</dt>
+              <dd class="col-sm-8">${data.number_of_seats}</dd>
+              
+              <dt class="col-sm-4">Участников:</dt>
+              <dd class="col-sm-8">${data.participant_count}</dd>
+            </dl>
+          </div>
+          <div class="col-md-6">
+            <h6 class="mb-3">Состав команды</h6>
+            <div class="list-group">
+              ${data.participants ? data.participants.map(p => `
+                <div class="list-group-item">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-user-circle text-primary me-2"></i>
+                    <div>
+                      <div class="fw-bold">${p.username}</div>
+                      ${p.fullname ? `<small class="text-muted">${p.fullname}</small>` : ''}
+                    </div>
+                  </div>
+                </div>
+              `).join('') : '<div class="alert alert-info">Нет участников</div>'}
+            </div>
+          </div>
+        </div>
       `;
     } else {
       detailsContainer.innerHTML = '<div class="alert alert-danger">Ошибка при загрузке данных</div>';
