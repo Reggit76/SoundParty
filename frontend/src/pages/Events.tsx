@@ -16,7 +16,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import  ru  from 'date-fns/locale/ru';
+import ru from 'date-fns/locale/ru';
 import DataTable from '../components/common/DataTable';
 import FormDialog from '../components/common/FormDialog';
 import { eventsApi, EventCreate } from '../services/api/events';
@@ -45,7 +45,7 @@ const columns = [
 ];
 
 const initialFormData: EventCreate = {
-  venue_id: 0,
+  venue_id: 1, // Временно захардкодим
   description: '',
   date: format(new Date(), 'yyyy-MM-dd'),
   time: format(new Date(), 'HH:mm:ss'),
@@ -62,10 +62,10 @@ const Events = () => {
   const [formData, setFormData] = useState<EventCreate>(initialFormData);
 
   const { showSuccess, showError } = useNotification();
-  const { isAdmin, isOrganizer } = useAuth();
+  const { user } = useAuth();
 
-  // Может создавать/редактировать только админ или организатор
-  const canModify = isAdmin || isOrganizer;
+  // Проверка прав: может создавать/редактировать только организатор или админ
+  const canManageEvents = user && (user.role_id === 1 || user.role_id === 2);
 
   const loadEvents = async () => {
     try {
@@ -86,6 +86,11 @@ const Events = () => {
   }, []);
 
   const handleSubmit = async () => {
+    if (!canManageEvents) {
+      showError('У вас нет прав для выполнения этого действия');
+      return;
+    }
+
     try {
       setIsLoading(true);
       if (editingEvent) {
@@ -109,6 +114,11 @@ const Events = () => {
   };
 
   const handleDelete = async (event: Event) => {
+    if (!canManageEvents) {
+      showError('У вас нет прав для выполнения этого действия');
+      return;
+    }
+
     if (window.confirm('Вы уверены, что хотите удалить это мероприятие?')) {
       try {
         setIsLoading(true);
@@ -124,6 +134,11 @@ const Events = () => {
   };
 
   const handleEdit = (event: Event) => {
+    if (!canManageEvents) {
+      showError('У вас нет прав для выполнения этого действия');
+      return;
+    }
+
     setEditingEvent(event);
     setFormData({
       venue_id: event.venue_id,
@@ -148,7 +163,7 @@ const Events = () => {
         <Typography variant="h4" component="h1">
           Мероприятия
         </Typography>
-        {canModify && (
+        {canManageEvents && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -164,12 +179,12 @@ const Events = () => {
         data={events}
         isLoading={isLoading}
         error={error || undefined}
-        onEdit={canModify ? handleEdit : undefined}
-        onDelete={canModify ? handleDelete : undefined}
+        onEdit={canManageEvents ? handleEdit : undefined}
+        onDelete={canManageEvents ? handleDelete : undefined}
         searchPlaceholder="Поиск по мероприятиям..."
       />
 
-      {canModify && (
+      {canManageEvents && (
         <FormDialog
           open={isDialogOpen}
           onClose={handleCloseDialog}

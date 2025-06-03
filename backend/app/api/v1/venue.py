@@ -7,18 +7,6 @@ from app.core.dependencies import get_current_organizer_or_admin
 
 router = APIRouter()
 
-@router.post("/venues", response_model=VenueResponse)
-def create_venue_route(
-    venue_data: VenueCreate, 
-    conn: psycopg2.extensions.connection = Depends(get_db),
-    current_user: dict = Depends(get_current_organizer_or_admin)
-):
-    try:
-        result = create_new_venue(conn, venue_data.dict())
-        return result[0]
-    finally:
-        put_db(conn)
-
 @router.get("/venues", response_model=list[VenueResponse])
 def get_all_venues_route(conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
@@ -32,6 +20,18 @@ def get_venue_by_id_route(venue_id: int, conn: psycopg2.extensions.connection = 
         result = get_venue_by_id_service(conn, venue_id)
         if not result:
             raise HTTPException(status_code=404, detail="Venue not found")
+        return result[0]
+    finally:
+        put_db(conn)
+
+@router.post("/venues", response_model=VenueResponse)
+def create_venue_route(
+    venue_data: VenueCreate, 
+    conn: psycopg2.extensions.connection = Depends(get_db),
+    current_user: dict = Depends(get_current_organizer_or_admin)
+):
+    try:
+        result = create_new_venue(conn, venue_data.dict())
         return result[0]
     finally:
         put_db(conn)

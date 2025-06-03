@@ -44,7 +44,7 @@ const Login: React.FC = () => {
       await login({ username: formData.username, password: formData.password });
       navigate('/');
     } catch (err) {
-      setError('Invalid username or password');
+      setError('Неверное имя пользователя или пароль');
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ const Login: React.FC = () => {
       >
         <Paper sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
-            Sign In
+            Вход в систему
           </Typography>
 
           {error && (
@@ -77,7 +77,7 @@ const Login: React.FC = () => {
               required
               fullWidth
               id="username"
-              label="Username"
+              label="Имя пользователя"
               name="username"
               autoComplete="username"
               autoFocus
@@ -89,7 +89,7 @@ const Login: React.FC = () => {
               required
               fullWidth
               name="password"
-              label="Password"
+              label="Пароль"
               type="password"
               id="password"
               autoComplete="current-password"
@@ -103,15 +103,15 @@ const Login: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Вход...' : 'Войти'}
             </Button>
           </form>
 
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Typography variant="body2">
-              Don't have an account?{' '}
+              Нет аккаунта?{' '}
               <Link component={RouterLink} to="/register">
-                Sign Up
+                Зарегистрироваться
               </Link>
             </Typography>
           </Box>

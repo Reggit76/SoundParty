@@ -10,8 +10,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Alert,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
 import DataTable from '../components/common/DataTable';
 import FormDialog from '../components/common/FormDialog';
 import { eventResultsApi, EventResultCreate } from '../services/api/eventResults';
@@ -22,8 +23,8 @@ import { useNotification } from '../contexts/NotificationContext';
 
 const columns = [
   { id: 'result_id', label: 'ID', minWidth: 50 },
-  { id: 'event_id', label: 'Мероприятие', minWidth: 170 },
-  { id: 'team_id', label: 'Команда', minWidth: 170 },
+  { id: 'event_description', label: 'Мероприятие', minWidth: 170 },
+  { id: 'team_name', label: 'Команда', minWidth: 170 },
   { id: 'score', label: 'Счет', minWidth: 100 },
 ];
 
@@ -135,14 +136,15 @@ const EventResults = () => {
 
   const enrichedResults = results.map((result) => ({
     ...result,
-    event_id: getEventDescription(result.event_id),
-    team_id: getTeamName(result.team_id),
+    event_description: getEventDescription(result.event_id),
+    team_name: getTeamName(result.team_id),
   }));
 
   return (
     <Container>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1">
+          <TrophyIcon sx={{ mr: 2, verticalAlign: 'middle' }} />
           Результаты мероприятий
         </Typography>
         <Button
@@ -153,6 +155,10 @@ const EventResults = () => {
           Добавить результат
         </Button>
       </Box>
+
+      <Alert severity="info" sx={{ mb: 3 }}>
+        Результаты мероприятий влияют на рейтинг команд. При добавлении результата рейтинг команды будет автоматически обновлен.
+      </Alert>
 
       <DataTable
         columns={columns}
@@ -213,6 +219,7 @@ const EventResults = () => {
               setFormData({ ...formData, score: parseInt(e.target.value) || 0 })
             }
             required
+            helperText="Введите счет команды за мероприятие. Он будет добавлен к рейтингу команды."
           />
         </Stack>
       </FormDialog>
@@ -220,4 +227,4 @@ const EventResults = () => {
   );
 };
 
-export default EventResults; 
+export default EventResults;

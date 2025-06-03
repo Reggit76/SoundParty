@@ -3,7 +3,7 @@ import { Venue, ApiResponse } from '../types/api';
 
 export interface VenueCreate {
   name: string;
-  address: string;
+  address?: string;
   capacity: number;
 }
 

@@ -46,7 +46,12 @@ const Register: React.FC = () => {
     setError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Пароли не совпадают');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Пароль должен содержать минимум 6 символов');
       return;
     }
 
@@ -62,7 +67,7 @@ const Register: React.FC = () => {
       });
       navigate('/');
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      setError('Ошибка регистрации. Попробуйте снова.');
     } finally {
       setLoading(false);
     }
@@ -80,7 +85,7 @@ const Register: React.FC = () => {
       >
         <Paper sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
-            Sign Up
+            Регистрация
           </Typography>
 
           {error && (
@@ -95,7 +100,7 @@ const Register: React.FC = () => {
               required
               fullWidth
               id="username"
-              label="Username"
+              label="Имя пользователя"
               name="username"
               autoComplete="username"
               autoFocus
@@ -107,7 +112,7 @@ const Register: React.FC = () => {
               required
               fullWidth
               id="fullname"
-              label="Full Name"
+              label="Полное имя"
               name="fullname"
               autoComplete="name"
               value={formData.fullname}
@@ -118,9 +123,10 @@ const Register: React.FC = () => {
               required
               fullWidth
               id="email"
-              label="Email Address"
+              label="Email адрес"
               name="email"
               autoComplete="email"
+              type="email"
               value={formData.email}
               onChange={handleChange}
             />
@@ -129,7 +135,7 @@ const Register: React.FC = () => {
               required
               fullWidth
               name="password"
-              label="Password"
+              label="Пароль"
               type="password"
               id="password"
               autoComplete="new-password"
@@ -141,7 +147,7 @@ const Register: React.FC = () => {
               required
               fullWidth
               name="confirmPassword"
-              label="Confirm Password"
+              label="Подтвердите пароль"
               type="password"
               id="confirmPassword"
               autoComplete="new-password"
@@ -155,15 +161,15 @@ const Register: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Signing up...' : 'Sign Up'}
+              {loading ? 'Регистрация...' : 'Зарегистрироваться'}
             </Button>
           </form>
 
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Typography variant="body2">
-              Already have an account?{' '}
+              Уже есть аккаунт?{' '}
               <Link component={RouterLink} to="/login">
-                Sign In
+                Войти
               </Link>
             </Typography>
           </Box>

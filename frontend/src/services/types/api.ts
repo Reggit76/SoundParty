@@ -59,7 +59,13 @@ export interface Event {
 export interface Venue {
   venue_id: number;
   name: string;
-  address: string;
+  address?: string;
+  capacity: number;
+}
+
+export interface VenueCreate {
+  name: string;
+  address?: string;
   capacity: number;
 }
 

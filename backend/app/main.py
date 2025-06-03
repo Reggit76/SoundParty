@@ -3,21 +3,19 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from app.database import init_db_pool
-from app.config import settings
+from app.core.config import settings
 
 # API routers
 from app.api.v1 import (
     auth as api_auth,
     user as api_user,
-    role as api_role,
     venue as api_venue,
     event as api_event,
     team as api_team,
     participant as api_participant,
     booking as api_booking,
     payment as api_payment,
-    event_result as api_event_result,
-    profile as api_profile
+    event_result as api_event_result
 )
 
 @asynccontextmanager
@@ -37,7 +35,7 @@ app = FastAPI(
 # Set up CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,10 +44,9 @@ app.add_middleware(
 # Create API router with version prefix
 api_router = APIRouter(prefix="/api/v1")
 
-# Include all API routes - УБИРАЕМ prefix из auth роутера
+# Include all API routes
 api_router.include_router(api_auth.router, tags=["auth"])
 api_router.include_router(api_user.router, tags=["users"])
-api_router.include_router(api_role.router, tags=["roles"])
 api_router.include_router(api_venue.router, tags=["venues"])
 api_router.include_router(api_event.router, tags=["events"])
 api_router.include_router(api_team.router, tags=["teams"])
@@ -57,7 +54,6 @@ api_router.include_router(api_participant.router, tags=["participants"])
 api_router.include_router(api_booking.router, tags=["bookings"])
 api_router.include_router(api_payment.router, tags=["payments"])
 api_router.include_router(api_event_result.router, tags=["event_results"])
-api_router.include_router(api_profile.router, tags=["profile"])
 
 # Configure OpenAPI
 def custom_openapi():

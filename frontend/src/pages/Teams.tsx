@@ -6,8 +6,9 @@ import {
   Box,
   TextField,
   Stack,
+  Alert,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Group as GroupIcon } from '@mui/icons-material';
 import DataTable from '../components/common/DataTable';
 import FormDialog from '../components/common/FormDialog';
 import { teamsApi } from '../services/api/teams';
@@ -33,12 +34,7 @@ const Teams = () => {
   });
 
   const { showSuccess, showError } = useNotification();
-  const { isAuthenticated, isAdmin, isOrganizer } = useAuth();
-
-  // Создавать команды могут все авторизованные пользователи
-  const canCreate = isAuthenticated;
-  // Редактировать могут только админы и организаторы
-  const canModify = isAdmin || isOrganizer;
+  const { user } = useAuth();
 
   const loadTeams = async () => {
     try {
@@ -111,63 +107,74 @@ const Teams = () => {
     setFormData({ name: '', rating: 0 });
   };
 
+  const canManageTeam = (team: Team) => {
+    // Здесь можно добавить логику проверки: является ли пользователь капитаном команды
+    // Пока разрешаем всем редактировать свои команды
+    return true;
+  };
+
   return (
     <Container>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1">
+          <GroupIcon sx={{ mr: 2, verticalAlign: 'middle' }} />
           Команды
         </Typography>
-        {canCreate && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setIsDialogOpen(true)}
-          >
-            Добавить команду
-          </Button>
-        )}
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setIsDialogOpen(true)}
+        >
+          Создать команду
+        </Button>
       </Box>
+
+      <Alert severity="info" sx={{ mb: 3 }}>
+        В команды можно попасть только по приглашению капитана команды. 
+        Создавая команду, вы автоматически становитесь её капитаном.
+      </Alert>
 
       <DataTable
         columns={columns}
         data={teams}
         isLoading={isLoading}
         error={error || undefined}
-        onEdit={canModify ? handleEdit : undefined}
-        onDelete={canModify ? handleDelete : undefined}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
         searchPlaceholder="Поиск по командам..."
       />
 
-      {canCreate && (
-        <FormDialog
-          open={isDialogOpen}
-          onClose={handleCloseDialog}
-          onSubmit={handleSubmit}
-          title={editingTeam ? 'Редактировать команду' : 'Создать команду'}
-          isLoading={isLoading}
-        >
-          <Stack spacing={2}>
+      <FormDialog
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSubmit={handleSubmit}
+        title={editingTeam ? 'Редактировать команду' : 'Создать команду'}
+        isLoading={isLoading}
+      >
+        <Stack spacing={2}>
+          <TextField
+            fullWidth
+            label="Название команды"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+            helperText="Придумайте уникальное название для вашей команды"
+          />
+          {editingTeam && (
             <TextField
               fullWidth
-              label="Название команды"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
+              type="number"
+              label="Рейтинг"
+              value={formData.rating}
+              onChange={(e) =>
+                setFormData({ ...formData, rating: parseInt(e.target.value) || 0 })
+              }
+              disabled
+              helperText="Рейтинг изменяется автоматически по результатам мероприятий"
             />
-            {canModify && (
-              <TextField
-                fullWidth
-                type="number"
-                label="Рейтинг"
-                value={formData.rating}
-                onChange={(e) =>
-                  setFormData({ ...formData, rating: parseInt(e.target.value) || 0 })
-                }
-              />
-            )}
-          </Stack>
-        </FormDialog>
-      )}
+          )}
+        </Stack>
+      </FormDialog>
     </Container>
   );
 };

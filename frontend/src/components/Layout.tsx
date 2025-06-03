@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -13,8 +13,6 @@ import {
   Toolbar,
   Typography,
   Button,
-  Divider,
-  Badge,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -26,12 +24,8 @@ import {
   BookOnline,
   Payment,
   EmojiEvents,
-  AdminPanelSettings,
-  Settings,
-  ExitToApp,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../services/api/config';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -39,67 +33,47 @@ interface LayoutProps {
 
 const drawerWidth = 240;
 
+// Роли: 1 - админ, 2 - организатор, 3 - пользователь
+const getMenuItems = (userRole?: number) => {
+  const baseItems = [
+    { text: 'Главная', icon: <Home />, path: '/', roles: [1, 2, 3] },
+    { text: 'Мероприятия', icon: <Event />, path: '/events', roles: [1, 2, 3] },
+    { text: 'Команды', icon: <Group />, path: '/teams', roles: [1, 2, 3] },
+    { text: 'Мои бронирования', icon: <BookOnline />, path: '/bookings', roles: [1, 2, 3] },
+    { text: 'Профиль', icon: <Person />, path: '/profile', roles: [1, 2, 3] },
+  ];
+
+  const organizerItems = [
+    { text: 'Площадки', icon: <Place />, path: '/venues', roles: [1, 2] },
+    { text: 'Платежи', icon: <Payment />, path: '/payments', roles: [1, 2] },
+    { text: 'Результаты', icon: <EmojiEvents />, path: '/event-results', roles: [1, 2] },
+  ];
+
+  const allItems = [...baseItems, ...organizerItems];
+  
+  if (!userRole) {
+    return baseItems.filter(item => item.roles.includes(3));
+  }
+
+  return allItems.filter(item => item.roles.includes(userRole));
+};
+
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [userRole, setUserRole] = useState<number | null>(null);
+  const [mobileOpen, setMobileOpen] = React.useState(false);
   const location = useLocation();
   const { isAuthenticated, logout, user } = useAuth();
 
-  // Получаем роль пользователя
-  useEffect(() => {
-    if (isAuthenticated) {
-      const fetchUserRole = async () => {
-        try {
-          const response = await api.get('/profile');
-          setUserRole(response.data.role_id);
-        } catch (error) {
-          console.error('Ошибка при получении данных пользователя:', error);
-        }
-      };
-      fetchUserRole();
-    }
-  }, [isAuthenticated]);
+  const menuItems = getMenuItems(user?.role_id);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  // Основные пункты меню
-  const mainMenuItems = [
-    { text: 'Главная', icon: <Home />, path: '/' },
-    { text: 'Мероприятия', icon: <Event />, path: '/events' },
-    { text: 'Площадки', icon: <Place />, path: '/venues' },
-    { text: 'Команды', icon: <Group />, path: '/teams' },
-  ];
-
-  // Пункты меню для авторизованных пользователей
-  const userMenuItems = [
-    { text: 'Профиль', icon: <Person />, path: '/profile' },
-    { text: 'Бронирования', icon: <BookOnline />, path: '/bookings' },
-    { text: 'Платежи', icon: <Payment />, path: '/payments' },
-    { text: 'Результаты', icon: <EmojiEvents />, path: '/event-results' },
-  ];
-
-  // Пункты меню для администраторов
-  const adminMenuItems = [
-    { text: 'Управление пользователями', icon: <Settings />, path: '/admin/users' },
-    { text: 'Управление ролями', icon: <AdminPanelSettings />, path: '/admin/roles' },
-  ];
-
-  const isAdmin = userRole === 1;
-
   const drawer = (
     <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Sound Party
-        </Typography>
-      </Toolbar>
-      <Divider />
-      
-      {/* Основные пункты меню */}
+      <Toolbar />
       <List>
-        {mainMenuItems.map((item) => (
+        {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               component={RouterLink}
@@ -112,59 +86,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </ListItem>
         ))}
       </List>
-
-      {/* Пункты меню для авторизованных пользователей */}
-      {isAuthenticated && (
-        <>
-          <Divider />
-          <List>
-            {userMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton
-                  component={RouterLink}
-                  to={item.path}
-                  selected={location.pathname === item.path}
-                >
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </>
-      )}
-
-      {/* Админ панель */}
-      {isAuthenticated && isAdmin && (
-        <>
-          <Divider />
-          <List>
-            <ListItem>
-              <ListItemText 
-                primary="Администрирование" 
-                primaryTypographyProps={{ 
-                  variant: 'subtitle2', 
-                  color: 'primary',
-                  fontWeight: 'bold' 
-                }} 
-              />
-            </ListItem>
-            {adminMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton
-                  component={RouterLink}
-                  to={item.path}
-                  selected={location.pathname === item.path}
-                  sx={{ pl: 4 }}
-                >
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </>
-      )}
     </div>
   );
 
@@ -174,42 +95,24 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <Toolbar>
           <IconButton
             color="inherit"
-            aria-label="открыть меню"
+            aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
             sx={{ mr: 2, display: { sm: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
-          
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Sound Party
           </Typography>
-
-          {/* Индикатор роли админа */}
-          {isAuthenticated && isAdmin && (
-            <Badge 
-              badgeContent="ADMIN" 
-              color="error" 
-              sx={{ mr: 2 }}
-            >
-              <AdminPanelSettings />
-            </Badge>
-          )}
-
-          {/* Кнопки авторизации */}
           {isAuthenticated ? (
-            <Button 
-              color="inherit" 
-              onClick={logout}
-              startIcon={<ExitToApp />}
-            >
-              Выйти
+            <Button color="inherit" onClick={logout}>
+              Выход
             </Button>
           ) : (
             <>
               <Button color="inherit" component={RouterLink} to="/login">
-                Войти
+                Вход
               </Button>
               <Button color="inherit" component={RouterLink} to="/register">
                 Регистрация
@@ -218,18 +121,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           )}
         </Toolbar>
       </AppBar>
-
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
       >
-        {/* Мобильное меню */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Лучшая производительность на мобильных устройствах
+            keepMounted: true,
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
@@ -238,8 +139,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         >
           {drawer}
         </Drawer>
-
-        {/* Десктопное меню */}
         <Drawer
           variant="permanent"
           sx={{
@@ -251,7 +150,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {drawer}
         </Drawer>
       </Box>
-
       <Box
         component="main"
         sx={{

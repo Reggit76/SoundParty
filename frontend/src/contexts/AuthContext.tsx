@@ -9,28 +9,13 @@ interface User {
   role_id: number;
 }
 
-interface RegisterData {
-  username: string;
-  fullname: string;
-  email: string;
-  password: string;
-  confirm_password: string;
-}
-
-interface LoginData {
-  username: string;
-  password: string;
-}
-
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  isAdmin: boolean;
-  isOrganizer: boolean;
-  login: (credentials: LoginData) => Promise<void>;
-  register: (userData: RegisterData) => Promise<void>;
-  logout: () => void;
   loading: boolean;
+  login: (credentials: { username: string; password: string }) => Promise<void>;
+  register: (userData: { username: string; fullname: string; email: string; password: string; confirm_password: string }) => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,56 +25,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isAdmin = user?.role_id === 1;
-  const isOrganizer = user?.role_id === 2;
-
   useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        try {
-          const response = await api.get('/auth/me');
-          setUser(response.data);
-          setIsAuthenticated(true);
-        } catch (error) {
-          // Токен недействителен, удаляем его
-          localStorage.removeItem('token');
-          delete api.defaults.headers.common['Authorization'];
-        }
-      }
-      setLoading(false);
-    };
-
-    initAuth();
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+      // При наличии токена можно попытаться получить данные пользователя
+      // или декодировать их из токена
+    }
+    setLoading(false);
   }, []);
 
-  const login = async (credentials: LoginData) => {
+  const login = async (credentials: { username: string; password: string }) => {
     try {
-      const response = await api.post('/auth/login', credentials);
+      const response = await api.post('/login', {
+        username: credentials.username,
+        password: credentials.password
+      });
+      
       const { access_token } = response.data;
       
       localStorage.setItem('token', access_token);
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
-      // Получаем данные пользователя
-      const userResponse = await api.get('/auth/me');
-      setUser(userResponse.data);
+      // Здесь можно добавить запрос для получения данных пользователя
+      // Или декодировать токен чтобы получить базовую информацию
+      setUser({
+        user_id: 1, // Временно, нужно получать из API
+        username: credentials.username,
+        fullname: 'User Name',
+        email: 'user@example.com',
+        role_id: 3 // Временно, нужно получать из API
+      });
       setIsAuthenticated(true);
     } catch (error) {
       throw new Error('Authentication failed');
     }
   };
 
-  const register = async (userData: RegisterData) => {
+  const register = async (userData: { username: string; fullname: string; email: string; password: string; confirm_password: string }) => {
     try {
-      await api.post('/auth/register', userData);
-      
-      // После успешной регистрации автоматически логинимся
-      await login({
+      const response = await api.post('/register', {
         username: userData.username,
-        password: userData.password
+        fullname: userData.fullname,
+        email: userData.email,
+        password: userData.password,
+        confirm_password: userData.confirm_password,
+        role_id: 3 // По умолчанию обычный пользователь
       });
+      
+      const { access_token } = response.data;
+      
+      localStorage.setItem('token', access_token);
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      
+      setUser({
+        user_id: response.data.user_id || 1,
+        username: userData.username,
+        fullname: userData.fullname,
+        email: userData.email,
+        role_id: 3
+      });
+      setIsAuthenticated(true);
     } catch (error) {
       throw new Error('Registration failed');
     }
@@ -103,16 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated, 
-      user, 
-      isAdmin, 
-      isOrganizer, 
-      login, 
-      register, 
-      logout, 
-      loading 
-    }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

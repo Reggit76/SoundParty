@@ -1,6 +1,5 @@
 # Импорты для удобства использования
 from .user import UserBase, UserCreate, UserUpdate, UserResponse
-from .role import RoleBase, RoleCreate, RoleUpdate, RoleResponse
 from .venue import VenueBase, VenueCreate, VenueUpdate, VenueResponse
 from .event import EventBase, EventCreate, EventUpdate, EventResponse, EventStatus
 from .team import TeamBase, TeamCreate, TeamUpdate, TeamResponse

@@ -1,82 +1,139 @@
 import React from 'react';
-import { Container, Typography, Paper, Box, Alert } from '@mui/material';
-import { Theme } from '@mui/material/styles';
-import { SxProps } from '@mui/system';
+import { 
+  Container, 
+  Typography, 
+  Paper, 
+  Box, 
+  Button, 
+  Grid,
+  Card,
+  CardContent,
+  CardActions
+} from '@mui/material';
+import { 
+  Event as EventIcon, 
+  Group as GroupIcon, 
+  BookOnline as BookIcon,
+  EmojiEvents as TrophyIcon
+} from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const paperStyle: SxProps<Theme> = {
-  p: 3,
-  display: 'flex',
-  flexDirection: 'column',
-  height: 240,
-};
-
 const Home: React.FC = () => {
-  const { isAuthenticated, user, isAdmin, isOrganizer } = useAuth();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+
+  const features = [
+    {
+      icon: <EventIcon sx={{ fontSize: 40 }} />,
+      title: 'Мероприятия',
+      description: 'Участвуйте в музыкальных мероприятиях и соревнованиях',
+      action: () => navigate('/events'),
+      available: true
+    },
+    {
+      icon: <GroupIcon sx={{ fontSize: 40 }} />,
+      title: 'Команды',
+      description: 'Создавайте команды и приглашайте друзей',
+      action: () => navigate('/teams'),
+      available: isAuthenticated
+    },
+    {
+      icon: <BookIcon sx={{ fontSize: 40 }} />,
+      title: 'Бронирования',
+      description: 'Управляйте своими заявками на участие',
+      action: () => navigate('/bookings'),
+      available: isAuthenticated
+    },
+    {
+      icon: <TrophyIcon sx={{ fontSize: 40 }} />,
+      title: 'Результаты',
+      description: 'Просматривайте результаты соревнований',
+      action: () => navigate('/event-results'),
+      available: isAuthenticated && user && (user.role_id === 1 || user.role_id === 2)
+    }
+  ];
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Welcome to Sound Party
+      <Box sx={{ mt: 4, mb: 6, textAlign: 'center' }}>
+        <Typography variant="h2" component="h1" gutterBottom>
+          Sound Party
         </Typography>
         <Typography variant="h5" color="text.secondary" paragraph>
-          Discover and book the best music venues for your events
+          Платформа для организации музыкальных мероприятий и соревнований
         </Typography>
-        
-        {isAuthenticated && user && (
-          <Alert severity="info" sx={{ mb: 3 }}>
-            Добро пожаловать, {user.fullname}! 
-            {isAdmin && ' У вас есть права администратора.'}
-            {isOrganizer && !isAdmin && ' У вас есть права организатора.'}
-            {!isAdmin && !isOrganizer && ' Вы участник системы.'}
-          </Alert>
+        {!isAuthenticated && (
+          <Box sx={{ mt: 4 }}>
+            <Button 
+              variant="contained" 
+              size="large" 
+              onClick={() => navigate('/register')}
+              sx={{ mr: 2 }}
+            >
+              Регистрация
+            </Button>
+            <Button 
+              variant="outlined" 
+              size="large" 
+              onClick={() => navigate('/login')}
+            >
+              Войти
+            </Button>
+          </Box>
         )}
       </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 4,
-        }}
-      >
-        <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 calc(33.333% - 32px)' } }}>
-          <Paper sx={paperStyle}>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Find Venues
-            </Typography>
-            <Typography>
-              Explore our curated list of premium music venues perfect for your next event.
-              {(isAdmin || isOrganizer) && ' Вы можете создавать и редактировать площадки.'}
-            </Typography>
-          </Paper>
-        </Box>
+      <Grid container spacing={4}>
+        {features.filter(feature => feature.available).map((feature, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card 
+              sx={{ 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column',
+                cursor: 'pointer',
+                '&:hover': {
+                  boxShadow: 6,
+                  transform: 'translateY(-2px)',
+                },
+                transition: 'all 0.3s ease-in-out'
+              }}
+              onClick={feature.action}
+            >
+              <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
+                <Box sx={{ color: 'primary.main', mb: 2 }}>
+                  {feature.icon}
+                </Box>
+                <Typography variant="h6" component="h2" gutterBottom>
+                  {feature.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {feature.description}
+                </Typography>
+              </CardContent>
+              <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                <Button size="small" color="primary">
+                  Перейти
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
-        <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 calc(33.333% - 32px)' } }}>
-          <Paper sx={paperStyle}>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Join Teams
-            </Typography>
-            <Typography>
-              Connect with other music enthusiasts and form teams for collaborative events.
-              {isAuthenticated && ' Вы можете создавать команды.'}
-            </Typography>
-          </Paper>
-        </Box>
-
-        <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 calc(33.333% - 32px)' } }}>
-          <Paper sx={paperStyle}>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Book Events
-            </Typography>
-            <Typography>
-              Easily schedule and manage your music events in just a few clicks.
-              {(isAdmin || isOrganizer) && ' Вы можете создавать и управлять мероприятиями.'}
-            </Typography>
-          </Paper>
-        </Box>
-      </Box>
+      {isAuthenticated && user && (
+        <Paper sx={{ mt: 6, p: 3, textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom>
+            Добро пожаловать, {user.fullname}!
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {user.role_id === 1 && 'Вы вошли как администратор'}
+            {user.role_id === 2 && 'Вы вошли как организатор'}
+            {user.role_id === 3 && 'Вы вошли как участник'}
+          </Typography>
+        </Paper>
+      )}
     </Container>
   );
 };
