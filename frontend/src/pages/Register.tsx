@@ -13,17 +13,19 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface RegisterFormData {
-  name: string;
+  username: string;        // Изменено с 'name' на 'username'
+  fullname: string;        // Добавлено поле 'fullname'
   email: string;
   password: string;
-  confirmPassword: string;
+  confirmPassword: string; // Будем конвертировать в confirm_password
 }
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
   const [formData, setFormData] = useState<RegisterFormData>({
-    name: '',
+    username: '',
+    fullname: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -51,14 +53,17 @@ const Register: React.FC = () => {
     setLoading(true);
 
     try {
+      // Преобразуем данные для backend
       await register({
-        name: formData.name,
+        username: formData.username,
+        fullname: formData.fullname,
         email: formData.email,
         password: formData.password,
+        confirm_password: formData.confirmPassword,
       });
       navigate('/');
-    } catch (err) {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -76,7 +81,7 @@ const Register: React.FC = () => {
       >
         <Paper sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
-            Sign Up
+            Регистрация
           </Typography>
 
           {error && (
@@ -90,12 +95,23 @@ const Register: React.FC = () => {
               margin="normal"
               required
               fullWidth
-              id="name"
-              label="Full Name"
-              name="name"
-              autoComplete="name"
+              id="username"
+              label="Имя пользователя"
+              name="username"
+              autoComplete="username"
               autoFocus
-              value={formData.name}
+              value={formData.username}
+              onChange={handleChange}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="fullname"
+              label="Полное имя"
+              name="fullname"
+              autoComplete="name"
+              value={formData.fullname}
               onChange={handleChange}
             />
             <TextField
@@ -103,9 +119,10 @@ const Register: React.FC = () => {
               required
               fullWidth
               id="email"
-              label="Email Address"
+              label="Email"
               name="email"
               autoComplete="email"
+              type="email"
               value={formData.email}
               onChange={handleChange}
             />
@@ -114,7 +131,7 @@ const Register: React.FC = () => {
               required
               fullWidth
               name="password"
-              label="Password"
+              label="Пароль"
               type="password"
               id="password"
               autoComplete="new-password"
@@ -126,7 +143,7 @@ const Register: React.FC = () => {
               required
               fullWidth
               name="confirmPassword"
-              label="Confirm Password"
+              label="Подтвердите пароль"
               type="password"
               id="confirmPassword"
               autoComplete="new-password"
@@ -140,15 +157,15 @@ const Register: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Signing up...' : 'Sign Up'}
+              {loading ? 'Регистрация...' : 'Зарегистрироваться'}
             </Button>
           </form>
 
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Typography variant="body2">
-              Already have an account?{' '}
+              Уже есть аккаунт?{' '}
               <Link component={RouterLink} to="/login">
-                Sign In
+                Войти
               </Link>
             </Typography>
           </Box>
@@ -158,4 +175,4 @@ const Register: React.FC = () => {
   );
 };
 
-export default Register; 
+export default Register;

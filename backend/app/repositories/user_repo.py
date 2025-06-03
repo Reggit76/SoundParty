@@ -48,26 +48,38 @@ def delete_user(conn, user_id):
     """
     return execute_query(conn, query, {"user_id": user_id})
 
-
 def get_user_by_username(conn, username):
     query = """
-    SELECT user_id, username, email, password_hash, role_id
+    SELECT user_id, username, fullname, email, password_hash, role_id
     FROM "Users"
     WHERE username = %(username)s
     """
     return execute_query(conn, query, {"username": username})
 
-def register_user(conn, user_data):
+def get_user_by_email(conn, email):
     """
-    Регистрация пользователя через хранимую процедуру
+    Получить пользователя по email
     """
     query = """
-    SELECT * FROM register_user(
-        %(username)s, 
-        %(fullname)s, 
-        %(email)s, 
-        %(password_hash)s, 
-        %(role_id)s
-    )
+    SELECT user_id, username, fullname, email, password_hash, role_id
+    FROM "Users"
+    WHERE email = %(email)s
     """
-    return execute_query(conn, query, user_data)
+    return execute_query(conn, query, {"email": email})
+
+def register_user(conn, user_data):
+    """
+    Регистрация пользователя - простая версия без хранимой процедуры
+    """
+    # Проверяем существование пользователя с таким username
+    existing_user = get_user_by_username(conn, user_data["username"])
+    if existing_user:
+        raise ValueError(f"Пользователь с именем {user_data['username']} уже существует")
+    
+    # Проверяем существование пользователя с таким email
+    existing_email = get_user_by_email(conn, user_data["email"])
+    if existing_email:
+        raise ValueError(f"Пользователь с email {user_data['email']} уже существует")
+    
+    # Создаем пользователя
+    return create_user(conn, user_data)

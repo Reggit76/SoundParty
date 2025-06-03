@@ -3,7 +3,7 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from app.database import init_db_pool
-from app.core.config import settings
+from app.config import settings
 
 # API routers
 from app.api.v1 import (
@@ -36,7 +36,7 @@ app = FastAPI(
 # Set up CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,7 +45,7 @@ app.add_middleware(
 # Create API router with version prefix
 api_router = APIRouter(prefix="/api/v1")
 
-# Include all API routes
+# Include all API routes - УБИРАЕМ prefix из auth роутера
 api_router.include_router(api_auth.router, tags=["auth"])
 api_router.include_router(api_user.router, tags=["users"])
 api_router.include_router(api_role.router, tags=["roles"])

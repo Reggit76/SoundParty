@@ -13,7 +13,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LoginFormData {
-  email: string;
+  username: string; // Изменено с email на username
   password: string;
 }
 
@@ -21,7 +21,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
+    username: '',
     password: '',
   });
   const [error, setError] = useState<string | null>(null);
@@ -41,10 +41,10 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login({ email: formData.email, password: formData.password });
+      await login({ username: formData.username, password: formData.password });
       navigate('/');
-    } catch (err) {
-      setError('Invalid email or password');
+    } catch (err: any) {
+      setError(err.message || 'Неверное имя пользователя или пароль');
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ const Login: React.FC = () => {
       >
         <Paper sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
-            Sign In
+            Вход в систему
           </Typography>
 
           {error && (
@@ -76,12 +76,12 @@ const Login: React.FC = () => {
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
+              id="username"
+              label="Имя пользователя"
+              name="username"
+              autoComplete="username"
               autoFocus
-              value={formData.email}
+              value={formData.username}
               onChange={handleChange}
             />
             <TextField
@@ -89,7 +89,7 @@ const Login: React.FC = () => {
               required
               fullWidth
               name="password"
-              label="Password"
+              label="Пароль"
               type="password"
               id="password"
               autoComplete="current-password"
@@ -103,15 +103,15 @@ const Login: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Вход...' : 'Войти'}
             </Button>
           </form>
 
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Typography variant="body2">
-              Don't have an account?{' '}
+              Нет аккаунта?{' '}
               <Link component={RouterLink} to="/register">
-                Sign Up
+                Зарегистрироваться
               </Link>
             </Typography>
           </Box>
@@ -121,4 +121,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login; 
+export default Login;

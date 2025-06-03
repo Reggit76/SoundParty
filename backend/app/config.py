@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
+from typing import List
+import os
 
 
 class Settings(BaseSettings):
@@ -12,7 +13,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # CORS
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
     
     # API
     API_V1_STR: str = "/api/v1"
@@ -20,6 +21,14 @@ class Settings(BaseSettings):
     
     class Config:
         case_sensitive = True
+        env_file = ".env"
+
+    @property
+    def cors_origins(self) -> List[str]:
+        """Обработка CORS origins из переменной окружения"""
+        if isinstance(self.BACKEND_CORS_ORIGINS, str):
+            return [origin.strip() for origin in self.BACKEND_CORS_ORIGINS.split(",")]
+        return self.BACKEND_CORS_ORIGINS
 
 
-settings = Settings() 
+settings = Settings()

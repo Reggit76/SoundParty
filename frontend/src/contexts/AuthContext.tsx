@@ -1,11 +1,32 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api/config';
 
+interface User {
+  user_id: number;
+  username: string;
+  fullname: string;
+  email: string;
+  role_id: number;
+}
+
+interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+interface RegisterData {
+  username: string;
+  fullname: string;
+  email: string;
+  password: string;
+  confirm_password: string;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: any | null;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
-  register: (userData: { name: string; email: string; password: string }) => Promise<void>;
+  user: User | null;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
 }
 
@@ -13,43 +34,50 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setIsAuthenticated(true);
-      // Здесь можно добавить запрос данных пользователя
+      // TODO: Здесь можно добавить запрос для получения данных текущего пользователя
     }
   }, []);
 
-  const login = async (credentials: { email: string; password: string }) => {
+  const login = async (credentials: LoginCredentials) => {
     try {
-      const response = await api.post('/auth/login', credentials);
-      const { access_token, user: userData } = response.data;
+      const response = await api.post('/login', credentials);
+      const { access_token, token_type } = response.data;
       
       localStorage.setItem('token', access_token);
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
-      setUser(userData);
       setIsAuthenticated(true);
-    } catch (error) {
-      throw new Error('Authentication failed');
+      // После успешного логина можно получить данные пользователя
+      // const userResponse = await api.get('/users/me');
+      // setUser(userResponse.data);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Authentication failed');
     }
   };
 
-  const register = async (userData: { name: string; email: string; password: string }) => {
+  const register = async (userData: RegisterData) => {
     try {
-      const response = await api.post('/auth/register', userData);
-      const { access_token, user: registeredUser } = response.data;
+      // Регистрируем пользователя
+      const registerResponse = await api.post('/register', userData);
       
-      localStorage.setItem('token', access_token);
-      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-      
-      setUser(registeredUser);
-      setIsAuthenticated(true);
-    } catch (error) {
-      throw new Error('Registration failed');
+      // После успешной регистрации автоматически логинимся
+      await login({
+        username: userData.username,
+        password: userData.password,
+      });
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.detail || 
+        error.response?.data?.message || 
+        'Registration failed'
+      );
     }
   };
 
@@ -73,4 +101,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};
