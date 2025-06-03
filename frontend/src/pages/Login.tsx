@@ -14,7 +14,7 @@ import {
 import {
   Visibility,
   VisibilityOff,
-  Email,
+  Person,
   Lock,
   LoginOutlined,
 } from '@mui/icons-material';
@@ -22,7 +22,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LoginFormData {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -30,7 +30,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
+    username: '',
     password: '',
   });
   const [error, setError] = useState<string | null>(null);
@@ -51,10 +51,10 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login({ email: formData.email, password: formData.password });
+      await login({ username: formData.username, password: formData.password });
       navigate('/');
     } catch (err) {
-      setError('Неверный email или пароль');
+      setError('Неверный username или пароль');
     } finally {
       setLoading(false);
     }
@@ -96,17 +96,17 @@ const Login: React.FC = () => {
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email адрес"
-              name="email"
-              autoComplete="email"
+              id="username"
+              label="Username"
+              name="username"
+              autoComplete="username"
               autoFocus
-              value={formData.email}
+              value={formData.username}
               onChange={handleChange}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Email color="action" />
+                    <Person color="action" />
                   </InputAdornment>
                 ),
               }}

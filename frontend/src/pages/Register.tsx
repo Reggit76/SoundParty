@@ -10,22 +10,22 @@ import {
   Alert,
   InputAdornment,
   IconButton,
-  LinearProgress,
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
+  Person,
   Email,
   Lock,
-  Person,
-  PersonAdd,
+  PersonAddOutlined,
+  Badge,
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface RegisterFormData {
-  fullname: string;
   username: string;
+  fullname: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -35,8 +35,8 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
   const [formData, setFormData] = useState<RegisterFormData>({
-    fullname: '',
     username: '',
+    fullname: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -54,35 +54,17 @@ const Register: React.FC = () => {
     }));
   };
 
-  const validateForm = (): boolean => {
-    if (formData.password !== formData.confirmPassword) {
-      setError('Пароли не совпадают');
-      return false;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Пароль должен содержать минимум 6 символов');
-      return false;
-    }
-
-    if (!formData.fullname.trim()) {
-      setError('Пожалуйста, введите ваше полное имя');
-      return false;
-    }
-
-    if (!formData.username.trim()) {
-      setError('Пожалуйста, введите имя пользователя');
-      return false;
-    }
-
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!validateForm()) {
+    if (formData.password !== formData.confirmPassword) {
+      setError('Пароли не совпадают');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Пароль должен содержать минимум 6 символов');
       return;
     }
 
@@ -90,41 +72,32 @@ const Register: React.FC = () => {
 
     try {
       await register({
-        name: formData.fullname,
+        username: formData.username,
+        fullname: formData.fullname,
         email: formData.email,
         password: formData.password,
       });
       navigate('/');
     } catch (err) {
-      setError('Ошибка регистрации. Попробуйте еще раз.');
+      setError('Ошибка регистрации. Попробуйте снова.');
     } finally {
       setLoading(false);
     }
   };
 
-  const getPasswordStrength = (password: string): number => {
-    let strength = 0;
-    if (password.length >= 6) strength += 25;
-    if (password.length >= 8) strength += 25;
-    if (/[A-Z]/.test(password)) strength += 25;
-    if (/[0-9]/.test(password)) strength += 25;
-    return strength;
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
-  const passwordStrength = getPasswordStrength(formData.password);
-
-  const getPasswordColor = (strength: number): 'error' | 'warning' | 'info' | 'success' => {
-    if (strength < 25) return 'error';
-    if (strength < 50) return 'warning';
-    if (strength < 75) return 'info';
-    return 'success';
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth="xs">
       <Box
         sx={{
-          mt: 4,
+          mt: 8,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -132,7 +105,7 @@ const Register: React.FC = () => {
       >
         <Paper sx={{ p: 4, width: '100%', borderRadius: 2 }} elevation={3}>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <PersonAdd sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+            <PersonAddOutlined sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
             <Typography component="h1" variant="h4" fontWeight="bold">
               Регистрация
             </Typography>
@@ -152,29 +125,11 @@ const Register: React.FC = () => {
               margin="normal"
               required
               fullWidth
-              id="fullname"
-              label="Полное имя"
-              name="fullname"
-              autoComplete="name"
-              autoFocus
-              value={formData.fullname}
-              onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Person color="action" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
               id="username"
-              label="Имя пользователя"
+              label="Username"
               name="username"
               autoComplete="username"
+              autoFocus
               value={formData.username}
               onChange={handleChange}
               InputProps={{
@@ -184,15 +139,33 @@ const Register: React.FC = () => {
                   </InputAdornment>
                 ),
               }}
-              helperText="Используйте только латинские буквы и цифры"
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="fullname"
+              label="Полное имя"
+              name="fullname"
+              autoComplete="name"
+              value={formData.fullname}
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Badge color="action" />
+                  </InputAdornment>
+                ),
+              }}
             />
             <TextField
               margin="normal"
               required
               fullWidth
               id="email"
-              label="Email адрес"
+              label="Email"
               name="email"
+              type="email"
               autoComplete="email"
               value={formData.email}
               onChange={handleChange}
@@ -224,7 +197,7 @@ const Register: React.FC = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={togglePasswordVisibility}
                       edge="end"
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -233,22 +206,6 @@ const Register: React.FC = () => {
                 ),
               }}
             />
-            
-            {/* Индикатор силы пароля */}
-            {formData.password && (
-              <Box sx={{ mt: 1, mb: 1 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Сила пароля:
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={passwordStrength}
-                  color={getPasswordColor(passwordStrength)}
-                  sx={{ mt: 0.5, height: 6, borderRadius: 3 }}
-                />
-              </Box>
-            )}
-
             <TextField
               margin="normal"
               required
@@ -260,12 +217,6 @@ const Register: React.FC = () => {
               autoComplete="new-password"
               value={formData.confirmPassword}
               onChange={handleChange}
-              error={formData.confirmPassword !== '' && formData.password !== formData.confirmPassword}
-              helperText={
-                formData.confirmPassword !== '' && formData.password !== formData.confirmPassword
-                  ? 'Пароли не совпадают'
-                  : ''
-              }
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -275,7 +226,7 @@ const Register: React.FC = () => {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={toggleConfirmPasswordVisibility}
                       edge="end"
                     >
                       {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
@@ -284,7 +235,6 @@ const Register: React.FC = () => {
                 ),
               }}
             />
-            
             <Button
               type="submit"
               fullWidth

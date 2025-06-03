@@ -33,7 +33,7 @@ import {
   Event,
   Edit,
   AdminPanelSettings,
-  Teams,
+  Groups,
   EmojiEvents,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -270,9 +270,9 @@ const Profile: React.FC = () => {
               textColor="primary"
               variant="fullWidth"
             >
-              <Tab icon={<Teams />} label="Мои команды" />
-              <Tab icon={<Event />} label="Мероприятия" />
-              <Tab icon={<EmojiEvents />} label="Достижения" />
+              <Tab icon={<Person />} label="Основная информация" />
+              <Tab icon={<Groups />} label="Мои команды" />
+              <Tab icon={<Event />} label="Мои мероприятия" />
             </Tabs>
 
             {/* Вкладка "Мои команды" */}

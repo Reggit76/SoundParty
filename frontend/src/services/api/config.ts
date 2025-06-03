@@ -61,7 +61,7 @@ api.interceptors.response.use(
       
       // Перенаправляем на страницу входа (только если не на публичной странице)
       const currentPath = window.location.pathname;
-      const publicPaths = ['/', '/login', '/register'];
+      const publicPaths = ['/', '/login', '/register', '/events'];
       
       if (!publicPaths.includes(currentPath)) {
         window.location.href = '/login';

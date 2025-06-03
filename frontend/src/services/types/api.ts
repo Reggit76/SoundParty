@@ -12,14 +12,24 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   username: string;
+  fullname: string;
   email: string;
   password: string;
-  fullname: string;
 }
 
 export interface AuthResponse {
   access_token: string;
   token_type: string;
+  user?: User;
+}
+
+// User types
+export interface User {
+  user_id: number;
+  username: string;
+  fullname: string;
+  email: string;
+  role_id: number;
 }
 
 // Team types
@@ -48,12 +58,6 @@ export interface Event {
 // Venue types
 export interface Venue {
   venue_id: number;
-  name: string;
-  address: string;
-  capacity: number;
-}
-
-export interface VenueCreate {
   name: string;
   address: string;
   capacity: number;
@@ -92,4 +96,4 @@ export interface Participant {
   participant_id: number;
   user_id: number;
   team_id: number;
-} 
+}
