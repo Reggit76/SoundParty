@@ -34,6 +34,7 @@ interface DataTableProps {
   searchPlaceholder?: string;
   canEdit?: (row: any) => boolean;
   canDelete?: (row: any) => boolean;
+  actions?: (row: any) => React.ReactNode[];
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -46,6 +47,7 @@ const DataTable: React.FC<DataTableProps> = ({
   searchPlaceholder = 'Поиск...',
   canEdit,
   canDelete,
+  actions,
 }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -76,6 +78,8 @@ const DataTable: React.FC<DataTableProps> = ({
     );
   }
 
+  const hasActions = onEdit || onDelete || actions;
+
   return (
     <Paper sx={{ width: '100%', overflow: 'hidden' }}>
       <Box p={2}>
@@ -100,13 +104,13 @@ const DataTable: React.FC<DataTableProps> = ({
                   {column.label}
                 </TableCell>
               ))}
-              {(onEdit || onDelete) && <TableCell>Действия</TableCell>}
+              {hasActions && <TableCell>Действия</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={columns.length + (onEdit || onDelete ? 1 : 0)}>
+                <TableCell colSpan={columns.length + (hasActions ? 1 : 0)}>
                   <Box display="flex" justifyContent="center" p={3}>
                     <CircularProgress />
                   </Box>
@@ -125,29 +129,32 @@ const DataTable: React.FC<DataTableProps> = ({
                         </TableCell>
                       );
                     })}
-                    {(onEdit || onDelete) && (
+                    {hasActions && (
                       <TableCell>
-                        {onEdit && (!canEdit || canEdit(row)) && (
-                          <Tooltip title="Редактировать">
-                            <IconButton
-                              size="small"
-                              onClick={() => onEdit(row)}
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {onDelete && (!canDelete || canDelete(row)) && (
-                          <Tooltip title="Удалить">
-                            <IconButton
-                              size="small"
-                              onClick={() => onDelete(row)}
-                              color="error"
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                        )}
+                        <Box display="flex" gap={1}>
+                          {onEdit && (!canEdit || canEdit(row)) && (
+                            <Tooltip title="Редактировать">
+                              <IconButton
+                                size="small"
+                                onClick={() => onEdit(row)}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {onDelete && (!canDelete || canDelete(row)) && (
+                            <Tooltip title="Удалить">
+                              <IconButton
+                                size="small"
+                                onClick={() => onDelete(row)}
+                                color="error"
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {actions && actions(row)}
+                        </Box>
                       </TableCell>
                     )}
                   </TableRow>

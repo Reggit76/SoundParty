@@ -25,4 +25,14 @@ export const teamsApi = {
   delete: async (id: number): Promise<void> => {
     await api.delete(`/teams/${id}`);
   },
+
+  addMember: async (teamId: number, username: string): Promise<Team> => {
+    const response = await api.post<ApiResponse<Team>>(`/teams/${teamId}/members`, { username });
+    return response.data.data;
+  },
+
+  removeMember: async (teamId: number, userId: number): Promise<Team> => {
+    const response = await api.delete<ApiResponse<Team>>(`/teams/${teamId}/members/${userId}`);
+    return response.data.data;
+  },
 }; 

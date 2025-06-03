@@ -33,15 +33,23 @@ export interface User {
 }
 
 // Team types
+export interface TeamMember {
+  user_id: number;
+  username: string;
+  fullname: string;
+}
+
 export interface Team {
   team_id: number;
   name: string;
   rating: number;
+  captain_id: number;
+  members: TeamMember[];
+  members_count: number;
 }
 
 export interface TeamCreate {
   name: string;
-  rating?: number;
 }
 
 // Event types

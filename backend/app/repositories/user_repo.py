@@ -6,7 +6,7 @@ def create_user(conn, user_data):
     (username, fullname, email, password_hash, role_id)
     VALUES 
     (%(username)s, %(fullname)s, %(email)s, %(password_hash)s, %(role_id)s)
-    RETURNING user_id
+    RETURNING user_id, username, fullname, email, role_id
     """
     return execute_query(conn, query, user_data)
 

@@ -17,7 +17,6 @@ import EventResults from './pages/EventResults';
 
 // Admin Pages
 import AdminUsers from './pages/admin/AdminUsers';
-import AdminRoles from './pages/admin/AdminRoles';
 
 const AppRoutes = () => {
   return (
@@ -27,20 +26,12 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Защищенные маршруты */}
+      {/* Защищенные маршруты (доступны всем авторизованным пользователям) */}
       <Route
-        path="/events"
+        path="/profile"
         element={
           <ProtectedRoute>
-            <Events />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/venues"
-        element={
-          <ProtectedRoute>
-            <Venues />
+            <Profile />
           </ProtectedRoute>
         }
       />
@@ -53,18 +44,18 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/bookings"
         element={
           <ProtectedRoute>
             <Bookings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events"
+        element={
+          <ProtectedRoute>
+            <Events />
           </ProtectedRoute>
         }
       />
@@ -76,29 +67,31 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* Маршруты для организаторов и администраторов */}
+      <Route
+        path="/venues"
+        element={
+          <AdminRoute allowOrganizer>
+            <Venues />
+          </AdminRoute>
+        }
+      />
       <Route
         path="/event-results"
         element={
-          <ProtectedRoute>
+          <AdminRoute allowOrganizer>
             <EventResults />
-          </ProtectedRoute>
+          </AdminRoute>
         }
       />
 
-      {/* Административные маршруты */}
+      {/* Административные маршруты (только для админов) */}
       <Route
         path="/admin/users"
         element={
           <AdminRoute>
             <AdminUsers />
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/roles"
-        element={
-          <AdminRoute>
-            <AdminRoles />
           </AdminRoute>
         }
       />

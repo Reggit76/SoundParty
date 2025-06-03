@@ -14,12 +14,14 @@ import { Close as CloseIcon } from '@mui/icons-material';
 interface FormDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit?: () => void;
   title: string;
   children: React.ReactNode;
   isLoading?: boolean;
   submitLabel?: string;
   cancelLabel?: string;
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  hideSubmitButton?: boolean;
 }
 
 const FormDialog: React.FC<FormDialogProps> = ({
@@ -31,9 +33,11 @@ const FormDialog: React.FC<FormDialogProps> = ({
   isLoading = false,
   submitLabel = 'Сохранить',
   cancelLabel = 'Отмена',
+  maxWidth = 'sm',
+  hideSubmitButton = false,
 }) => {
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth={maxWidth} fullWidth>
       <DialogTitle>
         {title}
         <IconButton
@@ -55,14 +59,16 @@ const FormDialog: React.FC<FormDialogProps> = ({
         <Button onClick={onClose} disabled={isLoading}>
           {cancelLabel}
         </Button>
-        <Button
-          onClick={onSubmit}
-          variant="contained"
-          disabled={isLoading}
-          startIcon={isLoading ? <CircularProgress size={20} /> : null}
-        >
-          {submitLabel}
-        </Button>
+        {!hideSubmitButton && onSubmit && (
+          <Button
+            onClick={onSubmit}
+            variant="contained"
+            disabled={isLoading}
+            startIcon={isLoading ? <CircularProgress size={20} /> : null}
+          >
+            {submitLabel}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

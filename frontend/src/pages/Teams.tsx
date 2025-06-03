@@ -6,18 +6,22 @@ import {
   Box,
   TextField,
   Stack,
+  Chip,
+  Alert,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Person as PersonIcon } from '@mui/icons-material';
 import DataTable from '../components/common/DataTable';
 import FormDialog from '../components/common/FormDialog';
 import { teamsApi } from '../services/api/teams';
-import { Team, TeamCreate } from '../services/types/api';
+import { Team, TeamCreate, TeamMember } from '../services/types/api';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 
 const columns = [
   { id: 'team_id', label: 'ID', minWidth: 50 },
   { id: 'name', label: 'Название', minWidth: 170 },
+  { id: 'captain', label: 'Капитан', minWidth: 170 },
+  { id: 'members_count', label: 'Участники', minWidth: 100 },
   { id: 'rating', label: 'Рейтинг', minWidth: 100 },
 ];
 
@@ -26,19 +30,17 @@ const Teams = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [formData, setFormData] = useState<TeamCreate>({
     name: '',
-    rating: 0,
   });
 
   const { showSuccess, showError } = useNotification();
-  const { isAuthenticated, isAdmin, isOrganizer } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
-  // Создавать команды могут все авторизованные пользователи
-  const canCreate = isAuthenticated;
-  // Редактировать могут только админы и организаторы
-  const canModify = isAdmin || isOrganizer;
+  // Проверяем, является ли пользователь капитаном команды
+  const isCaptain = (team: Team) => team.captain_id === user?.user_id;
 
   const loadTeams = async () => {
     try {
@@ -58,57 +60,75 @@ const Teams = () => {
     loadTeams();
   }, []);
 
-  const handleSubmit = async () => {
+  const handleCreateTeam = async () => {
     try {
       setIsLoading(true);
-      if (editingTeam) {
-        await teamsApi.update(editingTeam.team_id, formData);
-        showSuccess('Команда успешно обновлена');
-      } else {
-        await teamsApi.create(formData);
-        showSuccess('Команда успешно создана');
-      }
+      await teamsApi.create(formData);
+      showSuccess('Команда успешно создана');
       loadTeams();
       handleCloseDialog();
     } catch (err) {
-      showError(
-        editingTeam
-          ? 'Ошибка при обновлении команды'
-          : 'Ошибка при создании команды'
-      );
+      showError('Ошибка при создании команды');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDelete = async (team: Team) => {
-    if (window.confirm('Вы уверены, что хотите удалить эту команду?')) {
-      try {
-        setIsLoading(true);
-        await teamsApi.delete(team.team_id);
-        showSuccess('Команда успешно удалена');
-        loadTeams();
-      } catch (err) {
-        showError('Ошибка при удалении команды');
-      } finally {
-        setIsLoading(false);
-      }
+  const handleViewMembers = (team: Team) => {
+    setSelectedTeam(team);
+    setIsMembersDialogOpen(true);
+  };
+
+  const handleAddMember = async (username: string) => {
+    if (!selectedTeam) return;
+
+    try {
+      await teamsApi.addMember(selectedTeam.team_id, username);
+      showSuccess('Участник успешно добавлен в команду');
+      loadTeams();
+    } catch (err) {
+      showError('Ошибка при добавлении участника');
     }
   };
 
-  const handleEdit = (team: Team) => {
-    setEditingTeam(team);
-    setFormData({
-      name: team.name,
-      rating: team.rating,
-    });
-    setIsDialogOpen(true);
+  const handleRemoveMember = async (memberId: number) => {
+    if (!selectedTeam) return;
+
+    try {
+      await teamsApi.removeMember(selectedTeam.team_id, memberId);
+      showSuccess('Участник успешно удален из команды');
+      loadTeams();
+    } catch (err) {
+      showError('Ошибка при удалении участника');
+    }
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
-    setEditingTeam(null);
-    setFormData({ name: '', rating: 0 });
+    setFormData({ name: '' });
+  };
+
+  const handleCloseMembersDialog = () => {
+    setIsMembersDialogOpen(false);
+    setSelectedTeam(null);
+  };
+
+  const renderActions = (team: Team) => {
+    const actions = [];
+
+    // Просмотр участников доступен всем
+    actions.push(
+      <Button
+        key="view"
+        size="small"
+        startIcon={<PersonIcon />}
+        onClick={() => handleViewMembers(team)}
+      >
+        Участники
+      </Button>
+    );
+
+    return actions;
   };
 
   return (
@@ -117,13 +137,13 @@ const Teams = () => {
         <Typography variant="h4" component="h1">
           Команды
         </Typography>
-        {canCreate && (
+        {isAuthenticated && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setIsDialogOpen(true)}
           >
-            Добавить команду
+            Создать команду
           </Button>
         )}
       </Box>
@@ -133,41 +153,83 @@ const Teams = () => {
         data={teams}
         isLoading={isLoading}
         error={error || undefined}
-        onEdit={canModify ? handleEdit : undefined}
-        onDelete={canModify ? handleDelete : undefined}
+        actions={renderActions}
         searchPlaceholder="Поиск по командам..."
       />
 
-      {canCreate && (
-        <FormDialog
-          open={isDialogOpen}
-          onClose={handleCloseDialog}
-          onSubmit={handleSubmit}
-          title={editingTeam ? 'Редактировать команду' : 'Создать команду'}
-          isLoading={isLoading}
-        >
+      {/* Диалог создания команды */}
+      <FormDialog
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSubmit={handleCreateTeam}
+        title="Создать команду"
+        isLoading={isLoading}
+      >
+        <Stack spacing={2}>
+          <TextField
+            fullWidth
+            label="Название команды"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+          <Alert severity="info">
+            После создания команды вы автоматически станете её капитаном
+          </Alert>
+        </Stack>
+      </FormDialog>
+
+      {/* Диалог управления участниками */}
+      <FormDialog
+        open={isMembersDialogOpen}
+        onClose={handleCloseMembersDialog}
+        title={`Участники команды "${selectedTeam?.name}"`}
+        isLoading={isLoading}
+        maxWidth="sm"
+        hideSubmitButton
+      >
+        {selectedTeam && (
           <Stack spacing={2}>
-            <TextField
-              fullWidth
-              label="Название команды"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-            {canModify && (
-              <TextField
-                fullWidth
-                type="number"
-                label="Рейтинг"
-                value={formData.rating}
-                onChange={(e) =>
-                  setFormData({ ...formData, rating: parseInt(e.target.value) || 0 })
-                }
-              />
+            {isCaptain(selectedTeam) && (
+              <>
+                <TextField
+                  fullWidth
+                  label="Добавить участника по имени пользователя"
+                  placeholder="Введите имя пользователя"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      const input = e.target as HTMLInputElement;
+                      handleAddMember(input.value);
+                      input.value = '';
+                    }
+                  }}
+                />
+                <Alert severity="info">
+                  Нажмите Enter, чтобы добавить участника
+                </Alert>
+              </>
             )}
+
+            <Box>
+              <Typography variant="subtitle1" gutterBottom>
+                Текущие участники:
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {selectedTeam.members?.map((member: TeamMember) => (
+                  <Chip
+                    key={member.user_id}
+                    label={member.username}
+                    onDelete={
+                      isCaptain(selectedTeam) ? () => handleRemoveMember(member.user_id) : undefined
+                    }
+                    color={member.user_id === selectedTeam.captain_id ? "primary" : "default"}
+                  />
+                ))}
+              </Stack>
+            </Box>
           </Stack>
-        </FormDialog>
-      )}
+        )}
+      </FormDialog>
     </Container>
   );
 };
