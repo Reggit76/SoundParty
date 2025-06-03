@@ -1,0 +1,122 @@
+{% extends "base/base.html" %}
+{% block title %}Отчеты — Sound Party{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item"><a href="/admin">Админ-панель</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Отчеты</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="h3 mb-4">Отчеты и статистика</h1>
+
+  <!-- Общая статистика -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card text-white bg-primary">
+        <div class="card-body">
+          <h5 class="card-title">Пользователи</h5>
+          <p class="card-text display-6">{{ stats.users_count }}</p>
+          <small>
+            Админы: {{ stats.admin_count }}<br>
+            Организаторы: {{ stats.organizer_count }}<br>
+            Участники: {{ stats.participant_count }}
+          </small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-success">
+        <div class="card-body">
+          <h5 class="card-title">Мероприятия</h5>
+          <p class="card-text display-6">{{ stats.events_count }}</p>
+          <small>Всего мероприятий в системе</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-info">
+        <div class="card-body">
+          <h5 class="card-title">Команды</h5>
+          <p class="card-text display-6">{{ stats.teams_count }}</p>
+          <small>Активных команд</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-warning">
+        <div class="card-body">
+          <h5 class="card-title">Бронирования</h5>
+          <p class="card-text display-6">{{ stats.bookings_count }}</p>
+          <small>Всего бронирований</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Топ команд -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Топ команд по рейтингу</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Место</th>
+                  <th>Команда</th>
+                  <th>Рейтинг</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for team in top_teams %}
+                <tr>
+                  <td>{{ loop.index }}</td>
+                  <td>{{ team.name }}</td>
+                  <td>{{ team.rating }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Статистика по мероприятиям</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Мероприятие</th>
+                  <th>Бронирований</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for event_stat in event_stats %}
+                <tr>
+                  <td>{{ event_stat.event.name }}</td>
+                  <td>{{ event_stat.bookings_count }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

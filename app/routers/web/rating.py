@@ -41,7 +41,7 @@ def rating_page(request: Request, conn: psycopg2.extensions.connection = Depends
             else:
                 team["medal_class"] = None
         
-        return templates.TemplateResponse("rating.html", {
+        return templates.TemplateResponse("rating/list.html", {
             "request": request,
             "teams": teams,
             "current_user": current_user

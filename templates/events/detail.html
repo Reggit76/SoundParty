@@ -90,8 +90,8 @@
       <div class="card-body">
         <p>Хотите принять участие в этом мероприятии?</p>
         <div class="d-grid gap-2 d-md-flex">
-          <a href="/events/{{ event.event_id }}/apply" class="btn btn-primary btn-lg">
-            <i class="fas fa-paper-plane"></i> Подать заявку
+          <a href="/events/{{ event.event_id }}/register" class="btn btn-primary btn-lg">
+            <i class="fas fa-users"></i> Зарегистрировать команду
           </a>
           <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#shareModal">
             <i class="fas fa-share-alt"></i> Поделиться
@@ -105,10 +105,10 @@
         <h5 class="card-title"><i class="fas fa-sign-in-alt"></i> Требуется авторизация</h5>
         <p class="card-text">Чтобы подать заявку на участие, необходимо войти в систему или зарегистрироваться.</p>
         <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-          <a href="/login" class="btn btn-primary">
+          <a href="/auth/login" class="btn btn-primary">
             <i class="fas fa-sign-in-alt"></i> Войти
           </a>
-          <a href="/register" class="btn btn-outline-primary">
+          <a href="/auth/register" class="btn btn-outline-primary">
             <i class="fas fa-user-plus"></i> Регистрация
           </a>
         </div>

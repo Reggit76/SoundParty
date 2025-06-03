@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% block title %}Редактирование команды — Sound Party{% endblock %}
+{% block title %}Создание команды — Sound Party{% endblock %}
 
 {% block breadcrumbs %}
 <nav aria-label="breadcrumb">
@@ -7,7 +7,7 @@
     <li class="breadcrumb-item"><a href="/">Главная</a></li>
     <li class="breadcrumb-item"><a href="/admin">Админ-панель</a></li>
     <li class="breadcrumb-item"><a href="/admin/teams">Команды</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Редактирование</li>
+    <li class="breadcrumb-item active" aria-current="page">Создание</li>
   </ol>
 </nav>
 {% endblock %}
@@ -18,7 +18,7 @@
     <div class="col-md-8">
       <div class="card">
         <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-users"></i> Редактирование команды</h5>
+          <h5 class="mb-0"><i class="fas fa-users"></i> Создание команды</h5>
         </div>
         <div class="card-body">
           {% if error %}
@@ -27,25 +27,25 @@
           </div>
           {% endif %}
 
-          <form method="post" action="/admin/teams/{{ team.team_id }}/edit">
+          <form method="post" action="/admin/teams/create">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             
             <div class="mb-3">
               <label for="name" class="form-label">Название команды</label>
-              <input type="text" class="form-control" id="name" name="name" value="{{ team.name }}" required>
+              <input type="text" class="form-control" id="name" name="name" required>
             </div>
 
             <div class="mb-3">
               <label for="rating" class="form-label">Рейтинг</label>
-              <input type="number" class="form-control" id="rating" name="rating" min="0" max="100" value="{{ team.rating }}" required>
+              <input type="number" class="form-control" id="rating" name="rating" min="0" max="100" value="0" required>
             </div>
 
             <div class="d-flex justify-content-between">
               <a href="/admin/teams" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Назад
               </a>
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Сохранить
+              <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> Создать
               </button>
             </div>
           </form>
@@ -54,4 +54,4 @@
     </div>
   </div>
 </div>
-{% endblock %}
+{% endblock %} 

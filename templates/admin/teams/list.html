@@ -167,26 +167,16 @@
                   </span>
                 {% endif %}
               </td>
-              <td class="text-center">
-                <div class="btn-group" role="group">
-                  <a href="/teams/{{ team.team_id }}" class="btn btn-sm btn-outline-primary" title="Просмотр">
-                    <i class="fas fa-eye"></i>
-                  </a>
-                  <a href="/admin/teams/{{ team.team_id }}/edit" class="btn btn-sm btn-outline-warning" title="Редактировать">
-                    <i class="fas fa-edit"></i>
-                  </a>
-                  <button type="button" class="btn btn-sm btn-outline-info" 
-                          onclick="viewMembers({{ team.team_id }})"
-                          title="Участники">
-                    <i class="fas fa-users"></i>
-                  </button>
-                  <button type="button" class="btn btn-sm btn-outline-danger" 
-                          data-bs-toggle="modal" 
-                          data-bs-target="#deleteModal{{ team.team_id }}"
-                          title="Удалить">
+              <td class="text-end">
+                <a href="/admin/teams/{{ team.team_id }}/edit" class="btn btn-sm btn-outline-warning" title="Редактировать">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <form action="/admin/teams/{{ team.team_id }}/delete" method="post" style="display: inline;">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить"
+                          onclick="return confirm('Вы уверены, что хотите удалить эту команду?')">
                     <i class="fas fa-trash"></i>
                   </button>
-                </div>
+                </form>
               </td>
             </tr>
             {% endfor %}

@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% block title %}Редактирование мероприятия — Админ-панель{% endblock %}
+{% block title %}Редактирование мероприятия — Sound Party{% endblock %}
 
 {% block breadcrumbs %}
 <nav aria-label="breadcrumb">
@@ -13,382 +13,92 @@
 {% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-lg-9">
-    <div class="card shadow">
-      <div class="card-header bg-warning text-dark">
-        <h4 class="mb-0">
-          <i class="fas fa-edit"></i> Редактирование мероприятия: {{ event.description }}
-        </h4>
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-edit"></i> Редактирование мероприятия</h5>
       </div>
       <div class="card-body">
         {% if error %}
-          <div class="alert alert-danger">
-            <i class="fas fa-exclamation-circle"></i> {{ error }}
-          </div>
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-circle"></i> {{ error }}
+        </div>
         {% endif %}
-        
-        <form action="/admin/events/{{ event.event_id }}/edit" method="post" id="editEventForm">
+
+        <form action="/admin/events/{{ event.event_id }}/edit" method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           
-          <!-- Основная информация -->
+          <div class="mb-3">
+            <label for="name" class="form-label">Название мероприятия</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ event.description }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="description" class="form-label">Описание</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required>{{ event.description }}</textarea>
+          </div>
+
           <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-6">
               <div class="mb-3">
-                <label for="description" class="form-label">
-                  <i class="fas fa-tag"></i> Название мероприятия <span class="text-danger">*</span>
-                </label>
-                <input type="text" class="form-control form-control-lg" id="description" name="description" 
-                       value="{{ event.description }}" required>
+                <label for="event_date" class="form-label">Дата</label>
+                <input type="date" class="form-control" id="event_date" name="event_date" value="{{ event.date }}" required>
               </div>
             </div>
-          </div>
-          
-          <!-- Место и время -->
-          <div class="card mb-4">
-            <div class="card-header">
-              <h6 class="mb-0"><i class="fas fa-map-marker-alt"></i> Место и время проведения</h6>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label for="venue_id" class="form-label">
-                      <i class="fas fa-building"></i> Площадка <span class="text-danger">*</span>
-                    </label>
-                    <select class="form-select" id="venue_id" name="venue_id" required onchange="updateVenueInfo()">
-                      {% for venue in venues %}
-                        <option value="{{ venue.venue_id }}" 
-                                data-capacity="{{ venue.capacity }}" 
-                                data-address="{{ venue.address or '' }}"
-                                {{ 'selected' if venue.venue_id == event.venue_id else '' }}>
-                          {{ venue.name }}
-                        </option>
-                      {% endfor %}
-                    </select>
-                    <div id="venueInfo" class="form-text"></div>
-                  </div>
-                </div>
-                
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label for="max_teams" class="form-label">
-                      <i class="fas fa-users"></i> Максимум команд <span class="text-danger">*</span>
-                    </label>
-                    <input type="number" class="form-control" id="max_teams" name="max_teams" 
-                           min="1" max="100" value="{{ event.max_teams }}" required>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label for="date" class="form-label">
-                      <i class="fas fa-calendar-alt"></i> Дата проведения <span class="text-danger">*</span>
-                    </label>
-                    <input type="date" class="form-control" id="date" name="date" 
-                           value="{{ event.date }}" required>
-                  </div>
-                </div>
-                
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label for="time" class="form-label">
-                      <i class="fas fa-clock"></i> Время начала <span class="text-danger">*</span>
-                    </label>
-                    <input type="time" class="form-control" id="time" name="time" 
-                           value="{{ event.time }}" required>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Статус -->
-          <div class="card mb-4">
-            <div class="card-header">
-              <h6 class="mb-0"><i class="fas fa-flag"></i> Статус мероприятия</h6>
-            </div>
-            <div class="card-body">
+            <div class="col-md-6">
               <div class="mb-3">
-                <label for="status" class="form-label">Текущий статус <span class="text-danger">*</span></label>
-                <select class="form-select" id="status" name="status" required onchange="showStatusInfo()">
-                  <option value="анонс" {{ 'selected' if event.status == 'анонс' else '' }}>Анонс</option>
-                  <option value="в процессе" {{ 'selected' if event.status == 'в процессе' else '' }}>В процессе</option>
-                  <option value="завершено" {{ 'selected' if event.status == 'завершено' else '' }}>Завершено</option>
-                </select>
-                
-                <div id="statusInfo" class="mt-2">
-                  <div class="alert alert-info status-info" id="status-анонс">
-                    <h6><i class="fas fa-bullhorn"></i> Анонс</h6>
-                    <p class="mb-0">Мероприятие анонсировано, команды могут подавать заявки.</p>
-                  </div>
-                  
-                  <div class="alert alert-warning status-info" id="status-в процессе">
-                    <h6><i class="fas fa-play"></i> В процессе</h6>
-                    <p class="mb-0">Мероприятие проходит прямо сейчас, новые заявки не принимаются.</p>
-                  </div>
-                  
-                  <div class="alert alert-secondary status-info" id="status-завершено">
-                    <h6><i class="fas fa-check"></i> Завершено</h6>
-                    <p class="mb-0">Мероприятие завершено, можно добавлять результаты.</p>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Предупреждение о смене статуса -->
-              <div class="alert alert-warning">
-                <h6><i class="fas fa-exclamation-triangle"></i> Внимание при смене статуса</h6>
-                <ul class="mb-0">
-                  <li><strong>Анонс → В процессе:</strong> Прием заявок будет остановлен</li>
-                  <li><strong>В процессе → Завершено:</strong> Можно будет добавлять результаты</li>
-                  <li><strong>Завершено → Анонс:</strong> Все результаты могут быть потеряны</li>
-                </ul>
+                <label for="event_time" class="form-label">Время</label>
+                <input type="time" class="form-control" id="event_time" name="event_time" value="{{ event.time }}" required>
               </div>
             </div>
           </div>
-          
-          <!-- Кнопки действий -->
-          <div class="row">
-            <div class="col-md-3">
-              <button type="submit" class="btn btn-warning w-100">
+
+          <div class="mb-3">
+            <label for="venue_id" class="form-label">Площадка</label>
+            <select class="form-select" id="venue_id" name="venue_id" required>
+              <option value="">Выберите площадку</option>
+              {% for venue in venues %}
+              <option value="{{ venue.venue_id }}" {% if venue.venue_id == event.venue_id %}selected{% endif %}>
+                {{ venue.name }} ({{ venue.address }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="max_teams" class="form-label">Максимальное количество команд</label>
+            <input type="number" class="form-control" id="max_teams" name="max_teams" min="1" value="{{ event.max_teams }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="status" class="form-label">Статус</label>
+            <select class="form-select" id="status" name="status" required>
+              <option value="анонс" {% if event.status == 'анонс' %}selected{% endif %}>Анонс</option>
+              <option value="в процессе" {% if event.status == 'в процессе' %}selected{% endif %}>В процессе</option>
+              <option value="завершено" {% if event.status == 'завершено' %}selected{% endif %}>Завершено</option>
+            </select>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <a href="/admin/events" class="btn btn-secondary">
+              <i class="fas fa-arrow-left"></i> Назад к списку
+            </a>
+            <div class="btn-group">
+              <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Сохранить изменения
               </button>
-            </div>
-            <div class="col-md-3">
-              <a href="/events/{{ event.event_id }}" class="btn btn-outline-primary w-100" target="_blank">
-                <i class="fas fa-eye"></i> Просмотр
-              </a>
-            </div>
-            <div class="col-md-3">
-              <a href="/admin/events" class="btn btn-secondary w-100">
-                <i class="fas fa-arrow-left"></i> К списку
-              </a>
-            </div>
-            <div class="col-md-3">
-              <button type="button" class="btn btn-danger w-100" 
-                      data-bs-toggle="modal" 
-                      data-bs-target="#deleteEventModal">
-                <i class="fas fa-trash"></i> Удалить
-              </button>
+              <form action="/admin/delete/events/{{ event.event_id }}" method="post" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите удалить это мероприятие?')">
+                  <i class="fas fa-trash"></i> Удалить
+                </button>
+              </form>
             </div>
           </div>
         </form>
       </div>
     </div>
   </div>
-  
-  <div class="col-lg-3">
-    <!-- Информация о мероприятии -->
-    <div class="card">
-      <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Информация</h5>
-      </div>
-      <div class="card-body">
-        <table class="table table-sm table-borderless">
-          <tr>
-            <td><i class="fas fa-key text-muted"></i> ID:</td>
-            <td><strong>{{ event.event_id }}</strong></td>
-          </tr>
-          <tr>
-            <td><i class="fas fa-calendar-alt text-muted"></i> Дата:</td>
-            <td>{{ event.date }}</td>
-          </tr>
-          <tr>
-            <td><i class="fas fa-clock text-muted"></i> Время:</td>
-            <td>{{ event.time }}</td>
-          </tr>
-          <tr>
-            <td><i class="fas fa-building text-muted"></i> Площадка:</td>
-            <td>{{ event.venue_name }}</td>
-          </tr>
-          <tr>
-            <td><i class="fas fa-users text-muted"></i> Команд:</td>
-            <td>до {{ event.max_teams }}</td>
-          </tr>
-          <tr>
-            <td><i class="fas fa-flag text-muted"></i> Статус:</td>
-            <td>
-              {% if event.status == "анонс" %}
-                <span class="badge bg-success">{{ event.status }}</span>
-              {% elif event.status == "в процессе" %}
-                <span class="badge bg-warning">{{ event.status }}</span>
-              {% else %}
-                <span class="badge bg-secondary">{{ event.status }}</span>
-              {% endif %}
-            </td>
-          </tr>
-        </table>
-      </div>
-    </div>
-    
-    <!-- Статистика -->
-    <div class="card mt-4">
-      <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Статистика</h5>
-      </div>
-      <div class="card-body text-center">
-        <div class="row">
-          <div class="col-6">
-            <h4 class="text-primary">0</h4>
-            <p class="text-muted mb-0">Заявок</p>
-          </div>
-          <div class="col-6">
-            <h4 class="text-success">0</h4>
-            <p class="text-muted mb-0">Участников</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Дополнительные действия -->
-    <div class="card mt-4">
-      <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-tools"></i> Дополнительные действия</h5>
-      </div>
-      <div class="card-body">
-        <div class="d-grid gap-2">
-          {% if event.status == "завершено" %}
-            <a href="/admin/results?event={{ event.event_id }}" class="btn btn-outline-success">
-              <i class="fas fa-trophy"></i> Управление результатами
-            </a>
-          {% endif %}
-          
-          <button type="button" class="btn btn-outline-info" onclick="viewBookings()">
-            <i class="fas fa-clipboard-list"></i> Просмотр заявок
-          </button>
-          
-          <button type="button" class="btn btn-outline-warning" onclick="duplicateEvent()">
-            <i class="fas fa-copy"></i> Дублировать мероприятие
-          </button>
-          
-          <button type="button" class="btn btn-outline-secondary" onclick="exportEvent()">
-            <i class="fas fa-download"></i> Экспорт данных
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
-
-<!-- Модальное окно удаления -->
-<div class="modal fade" id="deleteEventModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title text-danger">
-          <i class="fas fa-exclamation-triangle"></i> Удаление мероприятия
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-danger">
-          <h6 class="alert-heading">Внимание!</h6>
-          <p class="mb-0">Вы уверены, что хотите удалить мероприятие <strong>{{ event.description }}</strong>?</p>
-        </div>
-        
-        <p>Это действие приведет к:</p>
-        <ul>
-          <li>Удалению всех заявок на мероприятие</li>
-          <li>Потере всех результатов и данных</li>
-          <li>Невозможности восстановления информации</li>
-        </ul>
-        
-        <div class="alert alert-warning">
-          <strong>Это действие нельзя отменить!</strong>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="fas fa-times"></i> Отмена
-        </button>
-        <form action="/admin/delete/event/{{ event.event_id }}" method="post" style="display: inline;">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <button type="submit" class="btn btn-danger">
-            <i class="fas fa-trash"></i> Удалить мероприятие
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-function updateVenueInfo() {
-  const venueSelect = document.getElementById('venue_id');
-  const selectedOption = venueSelect.options[venueSelect.selectedIndex];
-  const venueInfo = document.getElementById('venueInfo');
-  
-  if (selectedOption.value) {
-    const capacity = selectedOption.dataset.capacity;
-    const address = selectedOption.dataset.address;
-    
-    let infoText = `Вместимость: ${capacity} человек`;
-    if (address) {
-      infoText += ` | Адрес: ${address}`;
-    }
-    
-    venueInfo.innerHTML = infoText;
-  } else {
-    venueInfo.innerHTML = '';
-  }
-}
-
-function showStatusInfo() {
-  const statusSelect = document.getElementById('status');
-  const statusInfos = document.querySelectorAll('.status-info');
-  
-  statusInfos.forEach(info => info.style.display = 'none');
-  
-  if (statusSelect.value) {
-    const selectedInfo = document.getElementById(`status-${statusSelect.value}`);
-    if (selectedInfo) {
-      selectedInfo.style.display = 'block';
-    }
-  }
-}
-
-function viewBookings() {
-  window.open('/admin/bookings?event={{ event.event_id }}', '_blank');
-}
-
-function duplicateEvent() {
-  if (confirm('Создать копию мероприятия "{{ event.description }}"?')) {
-    // Здесь будет логика дублирования
-    alert('Функция дублирования будет реализована');
-  }
-}
-
-function exportEvent() {
-  alert('Экспорт данных мероприятия будет реализован');
-}
-
-// Валидация формы
-document.getElementById('editEventForm').addEventListener('submit', function(e) {
-  const currentStatus = '{{ event.status }}';
-  const newStatus = document.getElementById('status').value;
-  
-  // Предупреждение при критичных изменениях статуса
-  if (currentStatus === 'завершено' && newStatus !== 'завершено') {
-    if (!confirm('Вы меняете статус с "Завершено" на другой. Это может повлиять на результаты мероприятия. Продолжить?')) {
-      e.preventDefault();
-      return;
-    }
-  }
-  
-  if (currentStatus === 'анонс' && newStatus === 'завершено') {
-    if (!confirm('Вы переводите мероприятие сразу в статус "Завершено". Это правильно?')) {
-      e.preventDefault();
-      return;
-    }
-  }
-});
-
-// Инициализация
-document.addEventListener('DOMContentLoaded', function() {
-  updateVenueInfo();
-  showStatusInfo();
-});
-</script>
 {% endblock %}

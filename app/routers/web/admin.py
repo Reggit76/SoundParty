@@ -10,7 +10,7 @@ from app.core.csrf import get_csrf_token, csrf_protect_dependency
 from app.repositories.user_repo import get_user_by_username, get_all_users, delete_user, create_user, update_user
 from app.repositories.event_repo import get_all_events, create_event, delete_event, update_event, get_event_by_id
 from app.repositories.venue_repo import get_all_venues, create_venue, delete_venue, update_venue, get_venue_by_id
-from app.repositories.team_repo import get_all_teams, delete_team, get_team_by_id, update_team
+from app.repositories.team_repo import get_all_teams, delete_team, get_team_by_id, update_team, create_team
 from app.repositories.booking_repo import get_all_bookings, delete_booking, get_booking_by_id
 from app.repositories.payment_repo import get_all_payments, update_payment_status, get_payment_by_id
 from app.repositories.participant_repo import get_all_participants
@@ -19,7 +19,7 @@ from app.database import get_db, put_db
 from app.services.user_service import get_user_by_id_service
 from app.templates import templates
 
-router = APIRouter(tags=["admin"])
+router = APIRouter(tags=["admin"], prefix="/admin")
 
 def check_admin_access(request: Request, conn: psycopg2.extensions.connection):
     """Проверяет, является ли пользователь администратором"""
@@ -39,7 +39,7 @@ def check_admin_access(request: Request, conn: psycopg2.extensions.connection):
     
     return user[0]
 
-@router.get("/admin", response_class=HTMLResponse)
+@router.get("", response_class=HTMLResponse)
 def admin_dashboard(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -90,7 +90,7 @@ def admin_dashboard(request: Request, conn: psycopg2.extensions.connection = Dep
 
 # === УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ ===
 
-@router.get("/admin/users", response_class=HTMLResponse)
+@router.get("/users", response_class=HTMLResponse)
 def admin_users(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -109,7 +109,7 @@ def admin_users(request: Request, conn: psycopg2.extensions.connection = Depends
     finally:
         put_db(conn)
 
-@router.get("/admin/users/create", response_class=HTMLResponse)
+@router.get("/users/create", response_class=HTMLResponse)
 def admin_users_create_page(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -118,7 +118,7 @@ def admin_users_create_page(request: Request, conn: psycopg2.extensions.connecti
         
         csrf_token = get_csrf_token(request)
         
-        return templates.TemplateResponse("admin/users_create.html", {
+        return templates.TemplateResponse("admin/users/create.html", {
             "request": request,
             "current_user": current_user,
             "csrf_token": csrf_token
@@ -126,7 +126,7 @@ def admin_users_create_page(request: Request, conn: psycopg2.extensions.connecti
     finally:
         put_db(conn)
 
-@router.post("/admin/users/create", response_class=RedirectResponse)
+@router.post("/users/create", response_class=RedirectResponse)
 def admin_users_create(
     request: Request,
     username: str = Form(...),
@@ -147,7 +147,7 @@ def admin_users_create(
         existing_user = get_user_by_username(conn, username)
         if existing_user:
             csrf_token_new = get_csrf_token(request)
-            return templates.TemplateResponse("admin/users_create.html", {
+            return templates.TemplateResponse("admin/users/create.html", {
                 "request": request,
                 "current_user": current_user,
                 "csrf_token": csrf_token_new,
@@ -168,7 +168,7 @@ def admin_users_create(
     finally:
         put_db(conn)
 
-@router.get("/admin/users/{user_id}/edit", response_class=HTMLResponse)
+@router.get("/users/{user_id}/edit", response_class=HTMLResponse)
 def admin_users_edit_page(user_id: int, request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -181,7 +181,7 @@ def admin_users_edit_page(user_id: int, request: Request, conn: psycopg2.extensi
         
         csrf_token = get_csrf_token(request)
         
-        return templates.TemplateResponse("admin/users_edit.html", {
+        return templates.TemplateResponse("admin/users/edit.html", {
             "request": request,
             "current_user": current_user,
             "user": user[0],
@@ -190,7 +190,7 @@ def admin_users_edit_page(user_id: int, request: Request, conn: psycopg2.extensi
     finally:
         put_db(conn)
 
-@router.post("/admin/users/{user_id}/edit", response_class=RedirectResponse)
+@router.post("/users/{user_id}/edit", response_class=RedirectResponse)
 def admin_users_edit(
     user_id: int,
     request: Request,
@@ -233,7 +233,7 @@ def admin_users_edit(
 
 # === УПРАВЛЕНИЕ МЕРОПРИЯТИЯМИ ===
 
-@router.get("/admin/events", response_class=HTMLResponse)
+@router.get("/events", response_class=HTMLResponse)
 def admin_events(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -254,15 +254,34 @@ def admin_events(request: Request, conn: psycopg2.extensions.connection = Depend
     finally:
         put_db(conn)
 
-@router.post("/admin/events/create", response_class=RedirectResponse)
-def create_event_admin(
+@router.get("/events/create", response_class=HTMLResponse)
+def admin_events_create_page(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
+    try:
+        current_user = check_admin_access(request, conn)
+        if not current_user:
+            return RedirectResponse("/login", status_code=302)
+        
+        venues = get_all_venues(conn)
+        csrf_token = get_csrf_token(request)
+        
+        return templates.TemplateResponse("admin/events/create.html", {
+            "request": request,
+            "current_user": current_user,
+            "venues": venues,
+            "csrf_token": csrf_token
+        })
+    finally:
+        put_db(conn)
+
+@router.post("/events/create", response_class=RedirectResponse)
+def admin_events_create(
     request: Request,
-    venue_id: int = Form(...),
+    name: str = Form(...),
     description: str = Form(...),
-    date: str = Form(...),
-    time: str = Form(...),
+    event_date: str = Form(...),
+    event_time: str = Form(...),
+    venue_id: int = Form(...),
     max_teams: int = Form(...),
-    status: str = Form(...),
     csrf_token: str = Form(...),
     conn: psycopg2.extensions.connection = Depends(get_db),
     _: None = Depends(csrf_protect_dependency)
@@ -273,21 +292,21 @@ def create_event_admin(
             return RedirectResponse("/login", status_code=302)
         
         event_data = {
+            "description": name,  # используем name как description
             "venue_id": venue_id,
-            "description": description,
-            "date": date,
-            "time": time,
+            "date": event_date,
+            "time": event_time,
             "max_teams": max_teams,
-            "status": status
+            "status": "анонс"  # используем правильное значение из enum
         }
         
         create_event(conn, event_data)
         
-        return RedirectResponse("/admin/events?success=1", status_code=302)
+        return RedirectResponse("/admin/events?success=created", status_code=302)
     finally:
         put_db(conn)
 
-@router.get("/admin/events/{event_id}/edit", response_class=HTMLResponse)
+@router.get("/events/{event_id}/edit", response_class=HTMLResponse)
 def admin_events_edit_page(event_id: int, request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -301,7 +320,7 @@ def admin_events_edit_page(event_id: int, request: Request, conn: psycopg2.exten
         venues = get_all_venues(conn)
         csrf_token = get_csrf_token(request)
         
-        return templates.TemplateResponse("admin/events_edit.html", {
+        return templates.TemplateResponse("admin/events/edit.html", {
             "request": request,
             "current_user": current_user,
             "event": event[0],
@@ -311,14 +330,15 @@ def admin_events_edit_page(event_id: int, request: Request, conn: psycopg2.exten
     finally:
         put_db(conn)
 
-@router.post("/admin/events/{event_id}/edit", response_class=RedirectResponse)
+@router.post("/events/{event_id}/edit", response_class=RedirectResponse)
 def admin_events_edit(
     event_id: int,
     request: Request,
-    venue_id: int = Form(...),
+    name: str = Form(...),
     description: str = Form(...),
-    date: str = Form(...),
-    time: str = Form(...),
+    event_date: str = Form(...),
+    event_time: str = Form(...),
+    venue_id: int = Form(...),
     max_teams: int = Form(...),
     status: str = Form(...),
     csrf_token: str = Form(...),
@@ -331,10 +351,10 @@ def admin_events_edit(
             return RedirectResponse("/login", status_code=302)
         
         event_data = {
+            "description": name,  # используем name как description
             "venue_id": venue_id,
-            "description": description,
-            "date": date,
-            "time": time,
+            "date": event_date,
+            "time": event_time,
             "max_teams": max_teams,
             "status": status
         }
@@ -347,7 +367,7 @@ def admin_events_edit(
 
 # === УПРАВЛЕНИЕ ПЛОЩАДКАМИ ===
 
-@router.get("/admin/venues", response_class=HTMLResponse)
+@router.get("/venues", response_class=HTMLResponse)
 def admin_venues(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -366,7 +386,32 @@ def admin_venues(request: Request, conn: psycopg2.extensions.connection = Depend
     finally:
         put_db(conn)
 
-@router.post("/admin/venues/create", response_class=RedirectResponse)
+@router.get("/venues/create", response_class=HTMLResponse)
+def admin_venues_create_page(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
+    try:
+        current_user = check_admin_access(request, conn)
+        if not current_user:
+            return RedirectResponse("/login", status_code=302)
+        
+        csrf_token = get_csrf_token(request)
+        
+        response = templates.TemplateResponse("admin/venues/create.html", {
+            "request": request,
+            "current_user": current_user,
+            "csrf_token": csrf_token
+        })
+        
+        # Копируем куки из request.state.response, если они есть
+        if hasattr(request.state, "response") and request.state.response:
+            for cookie in request.state.response.raw_headers:
+                if cookie[0].decode().lower() == "set-cookie":
+                    response.raw_headers.append(cookie)
+        
+        return response
+    finally:
+        put_db(conn)
+
+@router.post("/venues/create", response_class=RedirectResponse)
 def create_venue_admin(
     request: Request,
     name: str = Form(...),
@@ -393,7 +438,7 @@ def create_venue_admin(
     finally:
         put_db(conn)
 
-@router.get("/admin/venues/{venue_id}/edit", response_class=HTMLResponse)
+@router.get("/venues/{venue_id}/edit", response_class=HTMLResponse)
 def admin_venues_edit_page(venue_id: int, request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -406,7 +451,7 @@ def admin_venues_edit_page(venue_id: int, request: Request, conn: psycopg2.exten
         
         csrf_token = get_csrf_token(request)
         
-        return templates.TemplateResponse("admin/venues_edit.html", {
+        return templates.TemplateResponse("admin/venues/edit.html", {
             "request": request,
             "current_user": current_user,
             "venue": venue[0],
@@ -415,7 +460,7 @@ def admin_venues_edit_page(venue_id: int, request: Request, conn: psycopg2.exten
     finally:
         put_db(conn)
 
-@router.post("/admin/venues/{venue_id}/edit", response_class=RedirectResponse)
+@router.post("/venues/{venue_id}/edit", response_class=RedirectResponse)
 def admin_venues_edit(
     venue_id: int,
     request: Request,
@@ -445,7 +490,7 @@ def admin_venues_edit(
 
 # === УПРАВЛЕНИЕ КОМАНДАМИ ===
 
-@router.get("/admin/teams", response_class=HTMLResponse)
+@router.get("/teams", response_class=HTMLResponse)
 def admin_teams(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -453,19 +498,6 @@ def admin_teams(request: Request, conn: psycopg2.extensions.connection = Depends
             return RedirectResponse("/login", status_code=302)
         
         teams = get_all_teams(conn)
-        participants = get_all_participants(conn)
-        
-        # Добавляем количество участников к каждой команде
-        team_participants = {}
-        for participant in participants:
-            team_name = participant.get("team_name")
-            if team_name not in team_participants:
-                team_participants[team_name] = 0
-            team_participants[team_name] += 1
-        
-        for team in teams:
-            team["participant_count"] = team_participants.get(team["name"], 0)
-        
         csrf_token = get_csrf_token(request)
         
         return templates.TemplateResponse("admin/teams.html", {
@@ -477,7 +509,49 @@ def admin_teams(request: Request, conn: psycopg2.extensions.connection = Depends
     finally:
         put_db(conn)
 
-@router.get("/admin/teams/{team_id}/edit", response_class=HTMLResponse)
+@router.get("/teams/create", response_class=HTMLResponse)
+def admin_teams_create_page(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
+    try:
+        current_user = check_admin_access(request, conn)
+        if not current_user:
+            return RedirectResponse("/login", status_code=302)
+        
+        csrf_token = get_csrf_token(request)
+        
+        return templates.TemplateResponse("admin/teams/create.html", {
+            "request": request,
+            "current_user": current_user,
+            "csrf_token": csrf_token
+        })
+    finally:
+        put_db(conn)
+
+@router.post("/teams/create", response_class=RedirectResponse)
+def admin_teams_create(
+    request: Request,
+    name: str = Form(...),
+    rating: int = Form(...),
+    csrf_token: str = Form(...),
+    conn: psycopg2.extensions.connection = Depends(get_db),
+    _: None = Depends(csrf_protect_dependency)
+):
+    try:
+        current_user = check_admin_access(request, conn)
+        if not current_user:
+            return RedirectResponse("/login", status_code=302)
+        
+        team_data = {
+            "name": name,
+            "rating": rating
+        }
+        
+        create_team(conn, team_data)
+        
+        return RedirectResponse("/admin/teams?success=created", status_code=302)
+    finally:
+        put_db(conn)
+
+@router.get("/teams/{team_id}/edit", response_class=HTMLResponse)
 def admin_teams_edit_page(team_id: int, request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -490,7 +564,7 @@ def admin_teams_edit_page(team_id: int, request: Request, conn: psycopg2.extensi
         
         csrf_token = get_csrf_token(request)
         
-        return templates.TemplateResponse("admin/teams_edit.html", {
+        return templates.TemplateResponse("admin/teams/edit.html", {
             "request": request,
             "current_user": current_user,
             "team": team[0],
@@ -525,9 +599,9 @@ def admin_teams_edit(
     finally:
         put_db(conn)
 
-# === УПРАВЛЕНИЕ ЗАЯВКАМИ ===
+# === УПРАВЛЕНИЕ БРОНИРОВАНИЯМИ ===
 
-@router.get("/admin/bookings", response_class=HTMLResponse)
+@router.get("/bookings", response_class=HTMLResponse)
 def admin_bookings(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -535,18 +609,6 @@ def admin_bookings(request: Request, conn: psycopg2.extensions.connection = Depe
             return RedirectResponse("/login", status_code=302)
         
         bookings = get_all_bookings(conn)
-        payments = get_all_payments(conn)
-        
-        # Добавляем информацию о платежах к заявкам
-        payment_by_booking = {}
-        for payment in payments:
-            booking_id = payment.get("booking_id")
-            payment_by_booking[booking_id] = payment
-        
-        for booking in bookings:
-            booking_id = booking["booking_id"]
-            booking["payment_status"] = payment_by_booking.get(booking_id, {}).get("payment_status", "не оплачено")
-        
         csrf_token = get_csrf_token(request)
         
         return templates.TemplateResponse("admin/bookings.html", {
@@ -558,9 +620,31 @@ def admin_bookings(request: Request, conn: psycopg2.extensions.connection = Depe
     finally:
         put_db(conn)
 
+@router.get("/bookings/{booking_id}", response_class=HTMLResponse)
+def admin_booking_details(booking_id: int, request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
+    try:
+        current_user = check_admin_access(request, conn)
+        if not current_user:
+            return RedirectResponse("/login", status_code=302)
+        
+        booking = get_booking_by_id(conn, booking_id)
+        if not booking:
+            raise HTTPException(status_code=404, detail="Бронирование не найдено")
+        
+        csrf_token = get_csrf_token(request)
+        
+        return templates.TemplateResponse("admin/bookings/details.html", {
+            "request": request,
+            "current_user": current_user,
+            "booking": booking[0],
+            "csrf_token": csrf_token
+        })
+    finally:
+        put_db(conn)
+
 # === УПРАВЛЕНИЕ ПЛАТЕЖАМИ ===
 
-@router.get("/admin/payments", response_class=HTMLResponse)
+@router.get("/payments", response_class=HTMLResponse)
 def admin_payments(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -579,7 +663,29 @@ def admin_payments(request: Request, conn: psycopg2.extensions.connection = Depe
     finally:
         put_db(conn)
 
-@router.post("/admin/payments/{payment_id}/update_status", response_class=RedirectResponse)
+@router.get("/payments/{payment_id}", response_class=HTMLResponse)
+def admin_payment_details(payment_id: int, request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
+    try:
+        current_user = check_admin_access(request, conn)
+        if not current_user:
+            return RedirectResponse("/login", status_code=302)
+        
+        payment = get_payment_by_id(conn, payment_id)
+        if not payment:
+            raise HTTPException(status_code=404, detail="Платеж не найден")
+        
+        csrf_token = get_csrf_token(request)
+        
+        return templates.TemplateResponse("admin/payments/details.html", {
+            "request": request,
+            "current_user": current_user,
+            "payment": payment[0],
+            "csrf_token": csrf_token
+        })
+    finally:
+        put_db(conn)
+
+@router.post("/payments/{payment_id}/update_status", response_class=RedirectResponse)
 def admin_payments_update_status(
     payment_id: int,
     request: Request,
@@ -601,7 +707,7 @@ def admin_payments_update_status(
 
 # === ОТЧЕТЫ ===
 
-@router.get("/admin/reports", response_class=HTMLResponse)
+@router.get("/reports", response_class=HTMLResponse)
 def admin_reports(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -668,7 +774,7 @@ def admin_reports(request: Request, conn: psycopg2.extensions.connection = Depen
 
 # === УПРАВЛЕНИЕ РЕЗУЛЬТАТАМИ ===
 
-@router.get("/admin/results", response_class=HTMLResponse)
+@router.get("/results", response_class=HTMLResponse)
 def admin_results(request: Request, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
         current_user = check_admin_access(request, conn)
@@ -689,7 +795,7 @@ def admin_results(request: Request, conn: psycopg2.extensions.connection = Depen
     finally:
         put_db(conn)
 
-@router.post("/admin/results/add", response_class=RedirectResponse)
+@router.post("/results/add", response_class=RedirectResponse)
 def admin_results_add(
     request: Request,
     event_id: int = Form(...),
@@ -718,7 +824,7 @@ def admin_results_add(
 
 # === ОБЩИЙ ОБРАБОТЧИК УДАЛЕНИЯ ===
 
-@router.post("/admin/delete/{entity}/{entity_id}", response_class=RedirectResponse)
+@router.post("/delete/{entity}/{entity_id}", response_class=RedirectResponse)
 def delete_entity(
     entity: str,
     entity_id: int,

@@ -1,0 +1,82 @@
+{% extends "base/base.html" %}
+
+{% block title %}Рейтинг команд - Sound Party{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Рейтинг команд</h1>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Команда</th>
+                    <th scope="col">Капитан</th>
+                    <th scope="col">Рейтинг</th>
+                    <th scope="col">Участие в мероприятиях</th>
+                    <th scope="col">Победы</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for team in teams %}
+                <tr>
+                    <td>
+                        {% if team.medal_class %}
+                            <i class="fas fa-medal text-{{ team.medal_class }}"></i>
+                        {% else %}
+                            {{ team.position }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/teams/{{ team.team_id }}" class="text-decoration-none">
+                            {% if team.logo_url %}
+                                <img src="{{ team.logo_url }}" alt="{{ team.name }}" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                            {% else %}
+                                <i class="fas fa-users me-2"></i>
+                            {% endif %}
+                            {{ team.name }}
+                        </a>
+                    </td>
+                    <td>{{ team.captain_name }}</td>
+                    <td>{{ team.rating }}</td>
+                    <td>{{ team.events_participated }}</td>
+                    <td>{{ team.wins }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if not teams %}
+    <div class="alert alert-info" role="alert">
+        Пока нет команд в рейтинге. Будьте первыми!
+    </div>
+    {% endif %}
+
+    {% if current_user %}
+    <div class="mt-4">
+        <a href="/teams/create" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Создать команду
+        </a>
+    </div>
+    {% else %}
+    <div class="mt-4">
+        <div class="alert alert-warning" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            Чтобы создать команду, необходимо <a href="/auth/login" class="alert-link">войти</a> в систему.
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Активация всех тултипов
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %} 

@@ -3,9 +3,9 @@ from app.utils.db_utils import execute_query
 def create_booking(conn, booking_data):
     query = """
     INSERT INTO "Bookings" 
-    (event_id, team_id, number_of_seats)
+    (event_id, team_id, status, number_of_seats)
     VALUES 
-    (%(event_id)s, %(team_id)s, %(number_of_seats)s)
+    (%(event_id)s, %(team_id)s, %(status)s, 1)
     RETURNING booking_id
     """
     return execute_query(conn, query, booking_data)

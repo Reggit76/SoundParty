@@ -1,0 +1,154 @@
+{% extends "base/base.html" %}
+{% block title %}Бронирования — Sound Party{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Главная</a></li>
+    <li class="breadcrumb-item"><a href="/admin">Админ-панель</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Бронирования</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Управление бронированиями</h1>
+  </div>
+
+  {% if bookings %}
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Мероприятие</th>
+          <th>Команда</th>
+          <th>Дата бронирования</th>
+          <th>Статус</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+        <tr>
+          <td>{{ booking.booking_id }}</td>
+          <td>{{ booking.event.name }}</td>
+          <td>{{ booking.team.name }}</td>
+          <td>{{ booking.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+          <td>
+            <span class="badge bg-{{ booking.status_color }}">{{ booking.status_name }}</span>
+          </td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-primary" onclick="showDetails({{ booking.booking_id }})">
+                <i class="fas fa-info-circle"></i>
+              </button>
+              <button type="button" class="btn btn-danger" onclick="confirmDelete({{ booking.booking_id }})">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> Бронирования отсутствуют
+  </div>
+  {% endif %}
+</div>
+
+<!-- Booking Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Детали бронирования</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="bookingDetails">
+        <!-- Details will be loaded here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Подтверждение удаления</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Вы действительно хотите удалить это бронирование?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <form id="deleteForm" method="post" style="display: inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="btn btn-danger">Удалить</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function showDetails(bookingId) {
+  const modal = document.getElementById('detailsModal');
+  const detailsContainer = document.getElementById('bookingDetails');
+  
+  try {
+    const response = await fetch(`/api/bookings/${bookingId}`);
+    const data = await response.json();
+    
+    if (response.ok) {
+      detailsContainer.innerHTML = `
+        <dl class="row">
+          <dt class="col-sm-4">Мероприятие:</dt>
+          <dd class="col-sm-8">${data.event.name}</dd>
+          
+          <dt class="col-sm-4">Команда:</dt>
+          <dd class="col-sm-8">${data.team.name}</dd>
+          
+          <dt class="col-sm-4">Дата создания:</dt>
+          <dd class="col-sm-8">${new Date(data.created_at).toLocaleString()}</dd>
+          
+          <dt class="col-sm-4">Статус:</dt>
+          <dd class="col-sm-8">
+            <span class="badge bg-${data.status_color}">${data.status_name}</span>
+          </dd>
+          
+          <dt class="col-sm-4">Комментарий:</dt>
+          <dd class="col-sm-8">${data.comment || 'Нет комментария'}</dd>
+        </dl>
+      `;
+    } else {
+      detailsContainer.innerHTML = '<div class="alert alert-danger">Ошибка при загрузке данных</div>';
+    }
+  } catch (error) {
+    detailsContainer.innerHTML = '<div class="alert alert-danger">Ошибка при загрузке данных</div>';
+  }
+  
+  new bootstrap.Modal(modal).show();
+}
+
+function confirmDelete(bookingId) {
+  const modal = document.getElementById('deleteModal');
+  const form = document.getElementById('deleteForm');
+  form.action = `/admin/bookings/${bookingId}/delete`;
+  new bootstrap.Modal(modal).show();
+}
+</script>
+{% endblock %} 

@@ -46,7 +46,7 @@ def profile_page(request: Request, conn: psycopg2.extensions.connection = Depend
         
         csrf_token = get_csrf_token(request)
         
-        return templates.TemplateResponse("profile.html", {
+        return templates.TemplateResponse("user/profile.html", {
             "request": request,
             "current_user": current_user,
             "user_teams": user_teams,
@@ -97,7 +97,7 @@ def update_profile(
         if current_password and new_password:
             if not verify_password(current_password, current_user["password_hash"]):
                 csrf_token = get_csrf_token(request)
-                return templates.TemplateResponse("profile.html", {
+                return templates.TemplateResponse("user/profile.html", {
                     "request": request,
                     "current_user": current_user,
                     "error": "Неверный текущий пароль",
@@ -106,7 +106,7 @@ def update_profile(
             
             if new_password != confirm_password:
                 csrf_token = get_csrf_token(request)
-                return templates.TemplateResponse("profile.html", {
+                return templates.TemplateResponse("user/profile.html", {
                     "request": request,
                     "current_user": current_user,
                     "error": "Новые пароли не совпадают",
@@ -144,7 +144,7 @@ def settings_page(request: Request, conn: psycopg2.extensions.connection = Depen
         current_user = user[0]
         csrf_token = get_csrf_token(request)
         
-        return templates.TemplateResponse("settings.html", {
+        return templates.TemplateResponse("user/settings.html", {
             "request": request,
             "current_user": current_user,
             "csrf_token": csrf_token

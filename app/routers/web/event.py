@@ -178,7 +178,7 @@ async def event_apply_page(event_id: int, request: Request, conn: psycopg2.exten
         else:
             event["formatted_time"] = str(event["time"])
         
-        return templates.TemplateResponse("event_detail.html", {
+        return templates.TemplateResponse("events/detail.html", {
             "request": request,
             "event": event,
             "current_user": current_user,

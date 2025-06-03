@@ -1,0 +1,70 @@
+{% extends "base/base.html" %}
+{% block title %}Регистрация на мероприятие — Sound Party{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">Регистрация на мероприятие</h4>
+        </div>
+        <div class="card-body">
+          <h5 class="card-title">{{ event.description }}</h5>
+          <p class="text-muted">
+            <i class="fas fa-calendar"></i> {{ event.date }}
+            <i class="fas fa-clock ms-3"></i> {{ event.time }}
+          </p>
+          
+          {% if error %}
+            <div class="alert alert-danger">
+              <i class="fas fa-exclamation-circle"></i> {{ error }}
+            </div>
+          {% endif %}
+          
+          {% if not teams %}
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle"></i> 
+              У вас пока нет команд. Чтобы зарегистрироваться на мероприятие, 
+              сначала <a href="/teams/create">создайте команду</a> или 
+              <a href="/teams">присоединитесь к существующей</a>.
+            </div>
+          {% else %}
+            <form action="/events/{{ event.event_id }}/register" method="post">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              
+              <div class="mb-3">
+                <label for="team_id" class="form-label">Выберите команду</label>
+                <select class="form-select" id="team_id" name="team_id" required>
+                  <option value="">Выберите команду для участия</option>
+                  {% for team in teams %}
+                  <option value="{{ team.team_id }}">{{ team.name }} (Рейтинг: {{ team.rating }})</option>
+                  {% endfor %}
+                </select>
+                <div class="form-text">
+                  Выберите команду, от имени которой вы хотите участвовать в мероприятии
+                </div>
+              </div>
+              
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 
+                <strong>Важно:</strong> После регистрации команды на мероприятие, вам нужно будет оплатить участие.
+                Подробности об оплате будут доступны в разделе "Мои заявки".
+              </div>
+              
+              <div class="d-flex justify-content-between">
+                <a href="/events/{{ event.event_id }}" class="btn btn-secondary">
+                  <i class="fas fa-arrow-left"></i> Назад к мероприятию
+                </a>
+                <button type="submit" class="btn btn-success">
+                  <i class="fas fa-check-circle"></i> Зарегистрировать команду
+                </button>
+              </div>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

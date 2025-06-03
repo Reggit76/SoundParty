@@ -1,0 +1,95 @@
+{% extends "base/base.html" %}
+
+{% block title %}Sound Party - Главная{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Приветственный баннер -->
+    <div class="jumbotron bg-light p-5 rounded mb-5">
+        <h1 class="display-4">Добро пожаловать на Sound Party!</h1>
+        <p class="lead">Платформа для организации и участия в музыкальных мероприятиях</p>
+        {% if not current_user %}
+            <hr class="my-4">
+            <p>Присоединяйтесь к нам, чтобы участвовать в мероприятиях!</p>
+            <a class="btn btn-primary btn-lg" href="/auth/register" role="button">Зарегистрироваться</a>
+            <a class="btn btn-outline-primary btn-lg" href="/auth/login" role="button">Войти</a>
+        {% endif %}
+    </div>
+
+    <!-- Предстоящие мероприятия -->
+    <h2 class="mb-4">Предстоящие мероприятия</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+        {% for event in events %}
+            {% if not event.is_past %}
+                <div class="col">
+                    <div class="card h-100">
+                        {% if event.image_url %}
+                            <img src="{{ event.image_url }}" class="card-img-top" alt="{{ event.name }}">
+                        {% else %}
+                            <img src="/static/img/default-event.jpg" class="card-img-top" alt="{{ event.name }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ event.name }}</h5>
+                            <p class="card-text">{{ event.description[:150] }}{% if event.description|length > 150 %}...{% endif %}</p>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <i class="fas fa-calendar-alt"></i> {{ event.date.strftime('%d.%m.%Y') }}
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-map-marker-alt"></i> {{ event.venue_name }}
+                            </li>
+                        </ul>
+                        <div class="card-footer">
+                            <a href="/events/{{ event.id }}" class="btn btn-primary">Подробнее</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Прошедшие мероприятия -->
+    <h2 class="mb-4">Прошедшие мероприятия</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for event in events %}
+            {% if event.is_past %}
+                <div class="col">
+                    <div class="card h-100 bg-light">
+                        {% if event.image_url %}
+                            <img src="{{ event.image_url }}" class="card-img-top" alt="{{ event.name }}">
+                        {% else %}
+                            <img src="/static/img/default-event.jpg" class="card-img-top" alt="{{ event.name }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title text-muted">{{ event.name }}</h5>
+                            <p class="card-text text-muted">{{ event.description[:150] }}{% if event.description|length > 150 %}...{% endif %}</p>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-light text-muted">
+                                <i class="fas fa-calendar-alt"></i> {{ event.date.strftime('%d.%m.%Y') }}
+                            </li>
+                            <li class="list-group-item bg-light text-muted">
+                                <i class="fas fa-map-marker-alt"></i> {{ event.venue_name }}
+                            </li>
+                        </ul>
+                        <div class="card-footer bg-light">
+                            <a href="/events/{{ event.id }}" class="btn btn-outline-secondary">Посмотреть результаты</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Активация всех тултипов
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %} 

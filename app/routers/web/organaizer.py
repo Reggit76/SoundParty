@@ -55,7 +55,7 @@ def organizer_events(request: Request, conn: psycopg2.extensions.connection = De
         
         csrf_token = get_csrf_token(request)
         
-        return templates.TemplateResponse("organizer/events.html", {
+        return templates.TemplateResponse("organaizer/events.html", {
             "request": request,
             "current_user": current_user,
             "events": events,
@@ -75,7 +75,7 @@ def organizer_bookings(request: Request, conn: psycopg2.extensions.connection = 
         bookings = get_all_bookings(conn)
         csrf_token = get_csrf_token(request)
         
-        return templates.TemplateResponse("organizer/bookings.html", {
+        return templates.TemplateResponse("organaizer/bookings.html", {
             "request": request,
             "current_user": current_user,
             "bookings": bookings,
@@ -106,7 +106,7 @@ def organizer_results(request: Request, conn: psycopg2.extensions.connection = D
         
         csrf_token = get_csrf_token(request)
         
-        return templates.TemplateResponse("organizer/results.html", {
+        return templates.TemplateResponse("organaizer/result.html", {
             "request": request,
             "current_user": current_user,
             "events": events_with_results,
@@ -178,7 +178,7 @@ def organizer_dashboard(request: Request, conn: psycopg2.extensions.connection =
             "total_bookings": len(bookings)
         }
         
-        return templates.TemplateResponse("organizer/dashboard.html", {
+        return templates.TemplateResponse("organaizer/dashboard.html", {
             "request": request,
             "current_user": current_user,
             "stats": stats,

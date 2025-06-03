@@ -116,32 +116,6 @@
       <!-- Правое меню (профиль/авторизация) -->
       <ul class="navbar-nav">
         {% if current_user %}
-          <!-- Уведомления -->
-          <li class="nav-item dropdown">
-            <a class="nav-link position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="fas fa-bell"></i>
-              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6em;">
-                3
-                <span class="visually-hidden">непрочитанных уведомлений</span>
-              </span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="width: 300px;">
-              <li><h6 class="dropdown-header">Уведомления</h6></li>
-              <li><a class="dropdown-item" href="#">
-                <small class="text-muted">5 мин назад</small><br>
-                Новое мероприятие: Битва диджеев
-              </a></li>
-              <li><a class="dropdown-item" href="#">
-                <small class="text-muted">1 час назад</small><br>
-                Ваша заявка одобрена
-              </a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-center" href="/notifications">
-                Показать все
-              </a></li>
-            </ul>
-          </li>
-          
           <!-- Профиль пользователя -->
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -157,7 +131,7 @@
                 <i class="fas fa-cog"></i> Настройки
               </a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="/logout">
+              <li><a class="dropdown-item text-danger" href="/auth/logout">
                 <i class="fas fa-sign-out-alt"></i> Выйти
               </a></li>
             </ul>
@@ -165,12 +139,12 @@
         {% else %}
           <!-- Кнопки входа/регистрации -->
           <li class="nav-item">
-            <a class="nav-link" href="/login">
+            <a class="nav-link" href="/auth/login">
               <i class="fas fa-sign-in-alt"></i> Войти
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link btn btn-outline-light btn-sm ms-2" href="/register">
+            <a class="nav-link btn btn-outline-light btn-sm ms-2" href="/auth/register">
               <i class="fas fa-user-plus"></i> Регистрация
             </a>
           </li>

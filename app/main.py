@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+import secrets
 
 # Локальные импорты
 from app.core.lifespan import lifespan
@@ -99,6 +100,20 @@ def custom_openapi():
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
+class SessionMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if not request.cookies.get("session_id"):
+            response = await call_next(request)
+            if isinstance(response, HTMLResponse):
+                response.set_cookie(
+                    key="session_id",
+                    value=secrets.token_urlsafe(32),
+                    httponly=True,
+                    samesite="strict"
+                )
+            return response
+        return await call_next(request)
+
 class CSRFErrorMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
@@ -108,8 +123,7 @@ class CSRFErrorMiddleware(BaseHTTPMiddleware):
             if exc.status_code == 403 and "CSRF" in str(exc.detail):
                 return RedirectResponse(url="/403", status_code=302)
             raise exc
-        
 
-
-app.openapi = custom_openapi 
+app.openapi = custom_openapi
+app.add_middleware(SessionMiddleware)
 app.add_middleware(CSRFErrorMiddleware)

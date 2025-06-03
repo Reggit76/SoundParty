@@ -9,11 +9,11 @@ from app.database import get_db, put_db
 from app.templates import templates
 
 
-router = APIRouter(tags=["web"])
+router = APIRouter(tags=["web"], prefix="/auth")
 
 @router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("auth/login.html", {"request": request})
 
 @router.post("/login", response_class=RedirectResponse)
 def login_user(
@@ -25,7 +25,7 @@ def login_user(
     try:
         user = get_user_by_username(conn, username)
         if not user or not verify_password(password, user[0]["password_hash"]):
-            return templates.TemplateResponse("login.html", {
+            return templates.TemplateResponse("auth/login.html", {
                 "request": request,
                 "error": "Неверное имя или пароль"
             })
@@ -39,7 +39,7 @@ def login_user(
 
 @router.get("/register", response_class=HTMLResponse)
 def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+    return templates.TemplateResponse("auth/register.html", {"request": request})
 
 @router.post("/register", response_class=RedirectResponse)
 def register_user_web(
@@ -53,14 +53,14 @@ def register_user_web(
 ):
     try:
         if password != confirm_password:
-            return templates.TemplateResponse("register.html", {
+            return templates.TemplateResponse("auth/register.html", {
                 "request": request,
                 "error": "Пароли не совпадают"
             })
 
         existing_user = get_user_by_username(conn, username)
         if existing_user:
-            return templates.TemplateResponse("register.html", {
+            return templates.TemplateResponse("auth/register.html", {
                 "request": request,
                 "error": "Имя пользователя занято"
             })
@@ -74,7 +74,7 @@ def register_user_web(
             "role_id": 3
         })
 
-        return RedirectResponse("/", status_code=302)
+        return RedirectResponse("/auth/login", status_code=302)
     finally:
         put_db(conn)
 

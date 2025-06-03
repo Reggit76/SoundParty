@@ -11,7 +11,7 @@
           <h4>Регистрация</h4>
         </div>
         <div class="card-body">
-          <form action="/register" method="post">
+          <form action="/auth/register" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <!-- Поля формы -->
             <div class="mb-3">
@@ -71,7 +71,7 @@
           </form>
           </div>
           <div class="card-footer text-center">
-            <small>Уже есть аккаунт? <a href="/login">Войдите</a></small>
+            <small>Уже есть аккаунт? <a href="/auth/login">Войдите</a></small>
           </div>
         </div>
       </div>

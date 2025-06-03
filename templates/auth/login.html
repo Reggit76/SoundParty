@@ -1,4 +1,4 @@
-% extends "base/base.html" %}
+{% extends "base/base.html" %}
 {% block title %}Вход — Sound Party{% endblock %}
 {% block content %}
   {% if error %}
@@ -11,7 +11,7 @@
           <h4 class="card-title text-center">Вход</h4>
         </div>
         <div class="card-body">
-          <form action="/login" method="post">
+          <form action="/auth/login" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="mb-3">
               <label for="username" class="form-label">Имя пользователя</label>
@@ -30,7 +30,7 @@
           </form>
         </div>
         <div class="card-footer text-center">
-          <small>Нет аккаунта? <a href="/register">Зарегистрируйтесь</a></small>
+          <small>Нет аккаунта? <a href="/auth/register">Зарегистрируйтесь</a></small>
         </div>
       </div>
     </div>
