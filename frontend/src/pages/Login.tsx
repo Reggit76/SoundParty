@@ -8,16 +8,7 @@ import {
   Box,
   Link,
   Alert,
-  InputAdornment,
-  IconButton,
 } from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  Person,
-  Lock,
-  LoginOutlined,
-} from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -35,7 +26,6 @@ const Login: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -54,14 +44,10 @@ const Login: React.FC = () => {
       await login({ username: formData.username, password: formData.password });
       navigate('/');
     } catch (err) {
-      setError('Неверный username или пароль');
+      setError('Invalid username or password');
     } finally {
       setLoading(false);
     }
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
   };
 
   return (
@@ -74,16 +60,10 @@ const Login: React.FC = () => {
           alignItems: 'center',
         }}
       >
-        <Paper sx={{ p: 4, width: '100%', borderRadius: 2 }} elevation={3}>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <LoginOutlined sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-            <Typography component="h1" variant="h4" fontWeight="bold">
-              Вход
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Войдите в свой аккаунт Sound Party
-            </Typography>
-          </Box>
+        <Paper sx={{ p: 4, width: '100%' }}>
+          <Typography component="h1" variant="h5" align="center" gutterBottom>
+            Sign In
+          </Typography>
 
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -103,80 +83,39 @@ const Login: React.FC = () => {
               autoFocus
               value={formData.username}
               onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Person color="action" />
-                  </InputAdornment>
-                ),
-              }}
             />
             <TextField
               margin="normal"
               required
               fullWidth
               name="password"
-              label="Пароль"
-              type={showPassword ? 'text' : 'password'}
+              label="Password"
+              type="password"
               id="password"
               autoComplete="current-password"
               value={formData.password}
               onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={togglePasswordVisibility}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              size="large"
-              sx={{ mt: 3, mb: 2, py: 1.5 }}
+              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Вход...' : 'Войти'}
+              {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              Нет аккаунта?{' '}
-              <Link 
-                component={RouterLink} 
-                to="/register"
-                sx={{ 
-                  fontWeight: 'bold',
-                  textDecoration: 'none',
-                  '&:hover': {
-                    textDecoration: 'underline'
-                  }
-                }}
-              >
-                Зарегистрироваться
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Typography variant="body2">
+              Don't have an account?{' '}
+              <Link component={RouterLink} to="/register">
+                Sign Up
               </Link>
             </Typography>
           </Box>
         </Paper>
-
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            © 2024 Sound Party. Все права защищены.
-          </Typography>
-        </Box>
       </Box>
     </Container>
   );

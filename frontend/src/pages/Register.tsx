@@ -8,18 +8,7 @@ import {
   Box,
   Link,
   Alert,
-  InputAdornment,
-  IconButton,
 } from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  Person,
-  Email,
-  Lock,
-  PersonAddOutlined,
-  Badge,
-} from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -43,8 +32,6 @@ const Register: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -59,12 +46,7 @@ const Register: React.FC = () => {
     setError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Пароли не совпадают');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Пароль должен содержать минимум 6 символов');
+      setError('Passwords do not match');
       return;
     }
 
@@ -76,21 +58,14 @@ const Register: React.FC = () => {
         fullname: formData.fullname,
         email: formData.email,
         password: formData.password,
+        confirm_password: formData.confirmPassword,
       });
       navigate('/');
     } catch (err) {
-      setError('Ошибка регистрации. Попробуйте снова.');
+      setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
@@ -103,16 +78,10 @@ const Register: React.FC = () => {
           alignItems: 'center',
         }}
       >
-        <Paper sx={{ p: 4, width: '100%', borderRadius: 2 }} elevation={3}>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <PersonAddOutlined sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-            <Typography component="h1" variant="h4" fontWeight="bold">
-              Регистрация
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Создайте аккаунт Sound Party
-            </Typography>
-          </Box>
+        <Paper sx={{ p: 4, width: '100%' }}>
+          <Typography component="h1" variant="h5" align="center" gutterBottom>
+            Sign Up
+          </Typography>
 
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -132,146 +101,73 @@ const Register: React.FC = () => {
               autoFocus
               value={formData.username}
               onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Person color="action" />
-                  </InputAdornment>
-                ),
-              }}
             />
             <TextField
               margin="normal"
               required
               fullWidth
               id="fullname"
-              label="Полное имя"
+              label="Full Name"
               name="fullname"
               autoComplete="name"
               value={formData.fullname}
               onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Badge color="action" />
-                  </InputAdornment>
-                ),
-              }}
             />
             <TextField
               margin="normal"
               required
               fullWidth
               id="email"
-              label="Email"
+              label="Email Address"
               name="email"
-              type="email"
               autoComplete="email"
               value={formData.email}
               onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email color="action" />
-                  </InputAdornment>
-                ),
-              }}
             />
             <TextField
               margin="normal"
               required
               fullWidth
               name="password"
-              label="Пароль"
-              type={showPassword ? 'text' : 'password'}
+              label="Password"
+              type="password"
               id="password"
               autoComplete="new-password"
               value={formData.password}
               onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={togglePasswordVisibility}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
             />
             <TextField
               margin="normal"
               required
               fullWidth
               name="confirmPassword"
-              label="Подтвердите пароль"
-              type={showConfirmPassword ? 'text' : 'password'}
+              label="Confirm Password"
+              type="password"
               id="confirmPassword"
               autoComplete="new-password"
               value={formData.confirmPassword}
               onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={toggleConfirmPasswordVisibility}
-                      edge="end"
-                    >
-                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              size="large"
-              sx={{ mt: 3, mb: 2, py: 1.5 }}
+              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+              {loading ? 'Signing up...' : 'Sign Up'}
             </Button>
           </form>
 
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              Уже есть аккаунт?{' '}
-              <Link 
-                component={RouterLink} 
-                to="/login"
-                sx={{ 
-                  fontWeight: 'bold',
-                  textDecoration: 'none',
-                  '&:hover': {
-                    textDecoration: 'underline'
-                  }
-                }}
-              >
-                Войти
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Typography variant="body2">
+              Already have an account?{' '}
+              <Link component={RouterLink} to="/login">
+                Sign In
               </Link>
             </Typography>
           </Box>
         </Paper>
-
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            © 2024 Sound Party. Все права защищены.
-          </Typography>
-        </Box>
       </Box>
     </Container>
   );

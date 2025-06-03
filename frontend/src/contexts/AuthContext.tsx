@@ -1,11 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api/config';
 
+interface RegisterData {
+  username: string;
+  fullname: string;
+  email: string;
+  password: string;
+  confirm_password: string;
+}
+
+interface LoginData {
+  username: string;
+  password: string;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any | null;
-  login: (credentials: { username: string; password: string }) => Promise<void>;
-  register: (userData: { username: string; fullname: string; email: string; password: string }) => Promise<void>;
+  login: (credentials: LoginData) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
 }
 
@@ -24,31 +37,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (credentials: { username: string; password: string }) => {
+  const login = async (credentials: LoginData) => {
     try {
       const response = await api.post('/auth/login', credentials);
-      const { access_token, user: userData } = response.data;
+      const { access_token } = response.data;
       
       localStorage.setItem('token', access_token);
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
-      setUser(userData);
       setIsAuthenticated(true);
     } catch (error) {
       throw new Error('Authentication failed');
     }
   };
 
-  const register = async (userData: { username: string; fullname: string; email: string; password: string }) => {
+  const register = async (userData: RegisterData) => {
     try {
       const response = await api.post('/auth/register', userData);
-      const { access_token, user: registeredUser } = response.data;
       
-      localStorage.setItem('token', access_token);
-      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-      
-      setUser(registeredUser);
-      setIsAuthenticated(true);
+      // После успешной регистрации автоматически логинимся
+      await login({
+        username: userData.username,
+        password: userData.password
+      });
     } catch (error) {
       throw new Error('Registration failed');
     }

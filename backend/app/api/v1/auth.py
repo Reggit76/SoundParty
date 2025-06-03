@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import timedelta
 import psycopg2
 
-from app.schemas.auth import Login, Token
+from app.schemas.auth import Login, Register, Token
 from app.services.user_service import register_new_user, authenticate_user
 from app.core.security import hash_password, create_access_token
 from app.config import settings
@@ -12,21 +12,20 @@ from app.database import get_db, put_db
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-def register_user_api(login_data: Login, conn: psycopg2.extensions.connection = Depends(get_db)):
+def register_user_api(register_data: Register, conn: psycopg2.extensions.connection = Depends(get_db)):
     try:
-        if login_data.password != login_data.confirm_password:
+        if register_data.password != register_data.confirm_password:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Пароли не совпадают"
             )
 
         user_data = {
-            "username": login_data.username,
-            "fullname": login_data.fullname,
-            "email": login_data.email,
-            "password": login_data.password,  # Передаем сырой пароль, не хеш
-            "confirm_password": login_data.confirm_password,
-            "role_id": login_data.role_id if hasattr(login_data, "role_id") else 3,
+            "username": register_data.username,
+            "fullname": register_data.fullname,
+            "email": register_data.email,
+            "password_hash": hash_password(register_data.password),
+            "role_id": register_data.role_id,
         }
 
         result = register_new_user(conn, user_data)

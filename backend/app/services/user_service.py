@@ -26,12 +26,9 @@ def authenticate_user(conn, username, password):
     return user[0]
 
 def register_new_user(conn, user_data):
-    # Хэшируем пароль
-    hashed_pw = hash_password(user_data["password"])
-    user_data_copy = user_data.copy()
-    user_data_copy["password_hash"] = hashed_pw
-    # Удаляем пароль из данных перед сохранением
-    if "password" in user_data_copy:
-        del user_data_copy["password"]
+    # Убираем confirm_password из данных перед сохранением
+    if "confirm_password" in user_data:
+        del user_data["confirm_password"]
     
-    return create_user(conn, user_data_copy)
+    # password_hash уже должен быть установлен в вызывающем коде
+    return create_user(conn, user_data)
