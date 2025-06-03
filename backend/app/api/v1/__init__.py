@@ -20,5 +20,6 @@ __all__ = [
     "participant_router",
     "booking_router",
     "payment_router",
-    "event_result_router"
+    "event_result_router",
+    "profile_router"
 ]

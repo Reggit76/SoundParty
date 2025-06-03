@@ -21,7 +21,7 @@ interface Column {
   id: string;
   label: string;
   minWidth?: number;
-  format?: (value: any) => string;
+  format?: (value: any) => React.ReactNode;
 }
 
 interface DataTableProps {
@@ -32,6 +32,8 @@ interface DataTableProps {
   onEdit?: (row: any) => void;
   onDelete?: (row: any) => void;
   searchPlaceholder?: string;
+  canEdit?: (row: any) => boolean;
+  canDelete?: (row: any) => boolean;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -42,6 +44,8 @@ const DataTable: React.FC<DataTableProps> = ({
   onEdit,
   onDelete,
   searchPlaceholder = 'Поиск...',
+  canEdit,
+  canDelete,
 }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -123,7 +127,7 @@ const DataTable: React.FC<DataTableProps> = ({
                     })}
                     {(onEdit || onDelete) && (
                       <TableCell>
-                        {onEdit && (
+                        {onEdit && (!canEdit || canEdit(row)) && (
                           <Tooltip title="Редактировать">
                             <IconButton
                               size="small"
@@ -133,7 +137,7 @@ const DataTable: React.FC<DataTableProps> = ({
                             </IconButton>
                           </Tooltip>
                         )}
-                        {onDelete && (
+                        {onDelete && (!canDelete || canDelete(row)) && (
                           <Tooltip title="Удалить">
                             <IconButton
                               size="small"
@@ -166,4 +170,4 @@ const DataTable: React.FC<DataTableProps> = ({
   );
 };
 
-export default DataTable; 
+export default DataTable;

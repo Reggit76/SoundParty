@@ -14,39 +14,44 @@ import {
   CircularProgress,
   Tab,
   Tabs,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Card,
+  CardContent,
+  Chip,
+  Alert,
 } from '@mui/material';
 import {
   Person,
   Email,
-  Phone,
-  Event,
-  MusicNote,
+  Badge,
   Group,
-  LocationOn,
+  Event,
+  Edit,
+  AdminPanelSettings,
+  Teams,
+  EmojiEvents,
 } from '@mui/icons-material';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../services/api/config';
-import Grid from '../components/CustomGrid';
 
 interface UserProfile {
-  id: number;
-  name: string;
+  user_id: number;
+  username: string;
+  fullname: string;
   email: string;
-  phone: string;
-  avatar_url: string;
-  location: string;
-  bio: string;
-  teams: Array<{
-    id: number;
-    name: string;
-    role: string;
-  }>;
-  upcoming_events: Array<{
-    id: number;
-    title: string;
-    date: string;
-    venue: string;
-  }>;
-  favorite_genres: string[];
+  role_id: number;
+}
+
+interface Team {
+  team_id: number;
+  name: string;
+  rating: number;
 }
 
 interface TabPanelProps {
@@ -73,45 +78,80 @@ function TabPanel(props: TabPanelProps) {
 
 const Profile: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editData, setEditData] = useState({
+    fullname: '',
+    email: '',
+  });
+
+  const { showSuccess, showError } = useNotification();
+  const { user } = useAuth();
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const [profileResponse, teamsResponse] = await Promise.all([
+        api.get('/profile'),
+        api.get('/profile/teams'),
+      ]);
+      setProfile(profileResponse.data);
+      setTeams(teamsResponse.data);
+      setError(null);
+    } catch (err: any) {
+      setError('Не удалось загрузить данные профиля');
+      showError('Ошибка при загрузке профиля');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        // Пока что показываем заглушку, так как endpoint профиля не реализован
-        setProfile({
-          id: 1,
-          name: 'John Doe',
-          email: 'john@example.com',
-          phone: '+1 234 567 8900',
-          avatar_url: '',
-          location: 'New York, NY',
-          bio: 'Music enthusiast and event organizer',
-          teams: [
-            { id: 1, name: 'Rock Band', role: 'Leader' },
-            { id: 2, name: 'Jazz Ensemble', role: 'Member' }
-          ],
-          upcoming_events: [
-            { id: 1, title: 'Rock Concert', date: '2024-12-20', venue: 'Madison Square Garden' },
-            { id: 2, title: 'Jazz Night', date: '2024-12-25', venue: 'Blue Note' }
-          ],
-          favorite_genres: ['Rock', 'Jazz', 'Blues']
-        });
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load profile. Please try again later.');
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, []);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
+
+  const handleEditProfile = () => {
+    if (profile) {
+      setEditData({
+        fullname: profile.fullname,
+        email: profile.email,
+      });
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const response = await api.put('/profile', editData);
+      setProfile(response.data);
+      setEditDialogOpen(false);
+      showSuccess('Профиль успешно обновлен');
+    } catch (err: any) {
+      showError('Ошибка при обновлении профиля');
+    }
+  };
+
+  const getRoleName = (roleId: number) => {
+    switch (roleId) {
+      case 1:
+        return 'Администратор';
+      case 2:
+        return 'Организатор';
+      case 3:
+        return 'Пользователь';
+      default:
+        return 'Неизвестная роль';
+    }
+  };
+
+  const isAdmin = profile?.role_id === 1;
 
   if (loading) {
     return (
@@ -123,57 +163,104 @@ const Profile: React.FC = () => {
 
   if (error || !profile) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <Typography color="error">{error || 'Profile not found'}</Typography>
-      </Box>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Alert severity="error">{error || 'Профиль не найден'}</Alert>
+      </Container>
     );
   }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Grid container spacing={4}>
+        {/* Левая панель - основная информация */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 3, textAlign: 'center' }}>
             <Avatar
-              src={profile.avatar_url}
-              alt={profile.name}
-              sx={{ width: 120, height: 120, mx: 'auto', mb: 2 }}
-            />
+              sx={{ 
+                width: 120, 
+                height: 120, 
+                mx: 'auto', 
+                mb: 2,
+                bgcolor: 'primary.main',
+                fontSize: '3rem'
+              }}
+            >
+              {profile.fullname.charAt(0).toUpperCase()}
+            </Avatar>
+            
             <Typography variant="h5" gutterBottom>
-              {profile.name}
+              {profile.fullname}
             </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              {profile.bio}
-            </Typography>
-            <Button variant="contained" color="primary" fullWidth>
-              Edit Profile
-            </Button>
+            
+            <Chip 
+              label={getRoleName(profile.role_id)}
+              color={isAdmin ? 'error' : 'primary'}
+              variant="outlined"
+              sx={{ mb: 2 }}
+            />
+            
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Button 
+                variant="contained" 
+                startIcon={<Edit />}
+                onClick={handleEditProfile}
+                fullWidth
+              >
+                Редактировать профиль
+              </Button>
+              
+              {isAdmin && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<AdminPanelSettings />}
+                  fullWidth
+                  onClick={() => {/* Навигация к админ панели */}}
+                >
+                  Админ панель
+                </Button>
+              )}
+            </Box>
           </Paper>
 
+          {/* Контактная информация */}
           <Paper sx={{ p: 3, mt: 3 }}>
-            <List>
+            <Typography variant="h6" gutterBottom>
+              Контактная информация
+            </Typography>
+            <List dense>
+              <ListItem>
+                <ListItemIcon>
+                  <Person />
+                </ListItemIcon>
+                <ListItemText 
+                  primary="Имя пользователя" 
+                  secondary={profile.username} 
+                />
+              </ListItem>
               <ListItem>
                 <ListItemIcon>
                   <Email />
                 </ListItemIcon>
-                <ListItemText primary="Email" secondary={profile.email} />
+                <ListItemText 
+                  primary="Email" 
+                  secondary={profile.email} 
+                />
               </ListItem>
               <ListItem>
                 <ListItemIcon>
-                  <Phone />
+                  <Badge />
                 </ListItemIcon>
-                <ListItemText primary="Phone" secondary={profile.phone} />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <LocationOn />
-                </ListItemIcon>
-                <ListItemText primary="Location" secondary={profile.location} />
+                <ListItemText 
+                  primary="Роль" 
+                  secondary={getRoleName(profile.role_id)} 
+                />
               </ListItem>
             </List>
           </Paper>
         </Grid>
 
+        {/* Правая панель - вкладки с данными */}
         <Grid item xs={12} md={8}>
           <Paper sx={{ width: '100%' }}>
             <Tabs
@@ -183,70 +270,108 @@ const Profile: React.FC = () => {
               textColor="primary"
               variant="fullWidth"
             >
-              <Tab icon={<Event />} label="Upcoming Events" />
-              <Tab icon={<Group />} label="Teams" />
-              <Tab icon={<MusicNote />} label="Favorite Genres" />
+              <Tab icon={<Teams />} label="Мои команды" />
+              <Tab icon={<Event />} label="Мероприятия" />
+              <Tab icon={<EmojiEvents />} label="Достижения" />
             </Tabs>
 
+            {/* Вкладка "Мои команды" */}
             <TabPanel value={tabValue} index={0}>
-              <List>
-                {profile.upcoming_events.map((event) => (
-                  <React.Fragment key={event.id}>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Event />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={event.title}
-                        secondary={`${new Date(event.date).toLocaleDateString()} at ${
-                          event.venue
-                        }`}
-                      />
-                    </ListItem>
-                    <Divider />
-                  </React.Fragment>
-                ))}
-              </List>
+              {teams.length === 0 ? (
+                <Box textAlign="center" py={4}>
+                  <Typography variant="h6" color="text.secondary">
+                    Вы не состоите ни в одной команде
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    Присоединитесь к команде или создайте свою собственную
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid container spacing={2}>
+                  {teams.map((team) => (
+                    <Grid item xs={12} sm={6} key={team.team_id}>
+                      <Card>
+                        <CardContent>
+                          <Typography variant="h6" gutterBottom>
+                            {team.name}
+                          </Typography>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <EmojiEvents color="primary" fontSize="small" />
+                            <Typography variant="body2" color="text.secondary">
+                              Рейтинг: {team.rating}
+                            </Typography>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
             </TabPanel>
 
+            {/* Вкладка "Мероприятия" */}
             <TabPanel value={tabValue} index={1}>
-              <List>
-                {profile.teams.map((team) => (
-                  <React.Fragment key={team.id}>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Group />
-                      </ListItemIcon>
-                      <ListItemText primary={team.name} secondary={`Role: ${team.role}`} />
-                    </ListItem>
-                    <Divider />
-                  </React.Fragment>
-                ))}
-              </List>
+              <Box textAlign="center" py={4}>
+                <Typography variant="h6" color="text.secondary">
+                  Раздел в разработке
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Здесь будут отображаться ваши мероприятия
+                </Typography>
+              </Box>
             </TabPanel>
 
+            {/* Вкладка "Достижения" */}
             <TabPanel value={tabValue} index={2}>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {profile.favorite_genres.map((genre, index) => (
-                  <Paper
-                    key={index}
-                    sx={{
-                      px: 2,
-                      py: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
-                    <MusicNote fontSize="small" />
-                    <Typography variant="body2">{genre}</Typography>
-                  </Paper>
-                ))}
+              <Box textAlign="center" py={4}>
+                <Typography variant="h6" color="text.secondary">
+                  Раздел в разработке
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Здесь будут отображаться ваши достижения
+                </Typography>
               </Box>
             </TabPanel>
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Диалог редактирования профиля */}
+      <Dialog 
+        open={editDialogOpen} 
+        onClose={() => setEditDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Редактировать профиль</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Полное имя"
+              value={editData.fullname}
+              onChange={(e) => setEditData({ ...editData, fullname: e.target.value })}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              value={editData.email}
+              onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+              margin="normal"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>
+            Отмена
+          </Button>
+          <Button onClick={handleSaveProfile} variant="contained">
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

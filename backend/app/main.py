@@ -16,7 +16,8 @@ from app.api.v1 import (
     participant as api_participant,
     booking as api_booking,
     payment as api_payment,
-    event_result as api_event_result
+    event_result as api_event_result,
+    profile as api_profile
 )
 
 @asynccontextmanager
@@ -56,6 +57,7 @@ api_router.include_router(api_participant.router, tags=["participants"])
 api_router.include_router(api_booking.router, tags=["bookings"])
 api_router.include_router(api_payment.router, tags=["payments"])
 api_router.include_router(api_event_result.router, tags=["event_results"])
+api_router.include_router(api_profile.router, tags=["profile"])
 
 # Configure OpenAPI
 def custom_openapi():

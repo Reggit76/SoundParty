@@ -103,9 +103,10 @@ ALTER TABLE "Event_Results" ADD FOREIGN KEY (team_id) REFERENCES "Teams" (team_i
 
 -- Вставляем базовые роли
 INSERT INTO "Roles" (role_name) VALUES 
-('admin'),
-('organizer'), 
-('participant');
+('Администратор'),
+('Организатор'),
+('Пользователь')
+ON CONFLICT (role_name) DO NOTHING;
 
 -- Создание функции для регистрации пользователя
 CREATE OR REPLACE FUNCTION register_user(

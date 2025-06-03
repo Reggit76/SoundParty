@@ -1,70 +1,101 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api/config';
 
+interface User {
+  user_id: number;
+  username: string;
+  fullname: string;
+  email: string;
+  role_id: number;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: any | null;
-  login: (credentials: { username: string; password: string }) => Promise<void>;
-  register: (userData: { 
-    username: string; 
-    fullname: string; 
-    email: string; 
-    password: string; 
-  }) => Promise<void>;
+  user: User | null;
+  login: (credentials: { email: string; password: string }) => Promise<void>;
+  register: (userData: { name: string; email: string; password: string }) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
+  // Проверяем токен при загрузке приложения
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setIsAuthenticated(true);
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // Здесь можно добавить запрос данных пользователя
-    }
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          // Устанавливаем токен в заголовки
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          
+          // Получаем данные пользователя
+          const response = await api.get('/profile');
+          setUser(response.data);
+          setIsAuthenticated(true);
+        } catch (error) {
+          // Если токен недействителен, удаляем его
+          localStorage.removeItem('token');
+          delete api.defaults.headers.common['Authorization'];
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
-  const login = async (credentials: { username: string; password: string }) => {
+  const login = async (credentials: { email: string; password: string }) => {
     try {
-      const response = await api.post('/auth/login', credentials);
-      const { access_token, user: userData } = response.data;
+      // Используем правильный формат для API
+      const loginData = {
+        username: credentials.email, // API ожидает username, а не email
+        password: credentials.password,
+      };
+
+      const response = await api.post('/login', loginData);
+      const { access_token } = response.data;
       
+      // Сохраняем токен
       localStorage.setItem('token', access_token);
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
-      setUser(userData);
+      // Получаем данные пользователя
+      const userResponse = await api.get('/profile');
+      setUser(userResponse.data);
       setIsAuthenticated(true);
-    } catch (error) {
-      throw new Error('Authentication failed');
+    } catch (error: any) {
+      throw new Error('Неверный логин или пароль');
     }
   };
 
-  const register = async (userData: { 
-    username: string; 
-    fullname: string; 
-    email: string; 
-    password: string; 
-  }) => {
+  const register = async (userData: { name: string; email: string; password: string }) => {
     try {
-      const registrationData = {
-        username: userData.username,
-        fullname: userData.fullname,
+      // Генерируем username из email (до символа @)
+      const username = userData.email.split('@')[0];
+      
+      const registerData = {
+        username: username,
+        fullname: userData.name,
         email: userData.email,
         password: userData.password,
-        confirm_password: userData.password, // Добавляем confirm_password
+        confirm_password: userData.password,
+        role_id: 3, // Обычный пользователь
       };
+
+      await api.post('/register', registerData);
       
-      const response = await api.post('/auth/register', registrationData);
-      
-      // После успешной регистрации можно сразу авторизоваться
-      await login({ username: userData.username, password: userData.password });
-    } catch (error) {
-      throw new Error('Registration failed');
+      // После регистрации автоматически логинимся
+      await login({ email: userData.email, password: userData.password });
+    } catch (error: any) {
+      throw new Error('Ошибка регистрации. Возможно, пользователь с таким email уже существует.');
     }
   };
 
@@ -75,8 +106,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthenticated(false);
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await api.get('/profile');
+      setUser(response.data);
+    } catch (error) {
+      // Если не удалось обновить данные пользователя, разлогиниваем
+      logout();
+    }
+  };
+
+  // Показываем загрузку при инициализации
+  if (loading) {
+    return null; // Или можно показать спиннер
+  }
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      user, 
+      login, 
+      register, 
+      logout, 
+      refreshUser 
+    }}>
       {children}
     </AuthContext.Provider>
   );
