@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 import psycopg2
 from datetime import datetime
 from typing import Optional
+import secrets
 
 from app.core.security import decode_access_token, hash_password
 from app.core.csrf import get_csrf_token, csrf_protect_dependency
@@ -401,11 +402,15 @@ def admin_venues_create_page(request: Request, conn: psycopg2.extensions.connect
             "csrf_token": csrf_token
         })
         
-        # Копируем куки из request.state.response, если они есть
-        if hasattr(request.state, "response") and request.state.response:
-            for cookie in request.state.response.raw_headers:
-                if cookie[0].decode().lower() == "set-cookie":
-                    response.raw_headers.append(cookie)
+        # Set session_id cookie if it doesn't exist
+        if "session_id" not in request.cookies:
+            session_id = secrets.token_urlsafe(32)
+            response.set_cookie(
+                key="session_id",
+                value=session_id,
+                httponly=True,
+                samesite="lax"
+            )
         
         return response
     finally:

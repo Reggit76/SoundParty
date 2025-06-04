@@ -2,18 +2,27 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://soundparty:soundparty@db:5432/soundparty
       - SECRET_KEY=your-secret-key-here
+      - PYTHONUNBUFFERED=1
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
-      - .:/app
+      - ./app:/app/app
+      - ./templates:/app/templates
+      - ./static:/app/static
+      - ./migrations:/app/migrations
+      - ./scripts:/app/scripts
     networks:
       - soundparty-network
+    restart: unless-stopped
 
   db:
     image: postgres:15
@@ -27,6 +36,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - soundparty-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U soundparty"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   pgadmin:
     image: dpage/pgadmin4
@@ -39,6 +54,7 @@ services:
       - db
     networks:
       - soundparty-network
+    restart: unless-stopped
 
 networks:
   soundparty-network:
